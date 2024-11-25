@@ -1,0 +1,536 @@
+---
+title: "Exploration of DO and hypoxia graphs"
+date: today
+format: 
+    html:
+        toc: true
+        toc-location: left
+        code-fold: true
+        embed-resources: true
+warning: false
+message: false
+error: true
+---
+
+```{r}
+library(tidyverse)
+```
+
+# Daily timing  
+
+Commented out the chunk below in favor of saving its output and re-loading.  
+
+```{r}
+load(here::here("data_wq", "wq_daily.RDS"))
+```
+
+
+```{r}
+# # find and read all wq files
+# path <- here::here("data_wq", "00b_QAQCd_by_stn")
+# stns_wq <- stringr::str_sub(dir(path, pattern = "wq_qc.RData$"), end = -10)
+# dat_wq <- list()
+# 
+# for(i in seq_along(stns_wq)){
+#     stat <- stns_wq[i]
+#     file_in <- here::here(path, paste0(stat, "_qc.RData"))
+#     dat <- get(load(file_in))
+# 
+#     dat <- dat |>
+#         mutate(date = lubridate::as_date(datetimestamp)) |>
+#         summarize(.by = date,
+#                   doLT2_hrs = sum(do_mgl <= 2, na.rm = TRUE)/4,
+#                   doLT5_hrs = sum(do_mgl <= 2, na.rm = TRUE)/4,
+#                   across(c(temp:turb), function(x) round(mean(x, na.rm = TRUE), 2)))
+# 
+#     dat$station <- stat
+# 
+#     dat_wq[[i]] <- dat
+# 
+# }
+# 
+# wq_daily <- bind_rows(dat_wq) |>
+#     select(station, everything())
+# 
+# save(wq_daily, file = here::here("data_wq", "wq_daily.RDS"),
+#         compress = "xz")
+```
+
+The `wq_daily` data frame has total number of hours that DO was less than 2 and 5, and all other values are daily means.  
+
+## general  
+
+```{r}
+hist(wq_daily$doLT2_hrs,
+     breaks = 50,
+     main = "Hours per day that are hypoxic",
+     xlab = "daily hours where DO < 2 mg/L")
+
+hist(wq_daily$doLT2_hrs,
+     breaks = 50,
+     main = "Hours per day that are hypoxic (trimmed y-axis)",
+     xlab = "daily hours where DO < 2 mg/L",
+     ylim = c(0, 10000))
+```
+
+How many days (in the entire QC'd dataset) experience hypoxia? 
+
+```{r}
+cat(prettyNum(sum(wq_daily$doLT2_hrs > 0), big.mark = ","))
+```
+
+Out of how many days represented?  
+
+```{r}
+cat(prettyNum(sum(!is.na(wq_daily$doLT2_hrs)), big.mark = ","))
+```
+
+
+
+How many experience it for more than 2 hours?  
+
+```{r}
+cat(prettyNum(sum(wq_daily$doLT2_hrs >= 2), big.mark = ","))
+```
+
+So more than half of our days with hypoxia experience it for at least 2 hours.  
+
+
+How many stations have at least a single day in the record with at least 2 hours of hypoxia?  
+
+```{r}
+wq_daily |> 
+    filter(doLT2_hrs >= 2) |> 
+    select(station) |> 
+    distinct() |> 
+    nrow()
+```
+
+Out of how many stations in the dataset?  
+
+```{r}
+length(unique(wq_daily$station))
+```
+
+So most stations experience hypoxia at SOME point in the data record. The question is, where does it happen a lot. And how do we want to define "a lot".  
+
+## number days per year and month....  
+
+```{r}
+wq_monthly <- wq_daily |> 
+    mutate(year = lubridate::year(date),
+           month = lubridate::month(date)) |> 
+    summarize(.by = c(station, year, month),
+              nDaysAnyHypoxia = sum(doLT2_hrs > 0),
+              nDays2HrsHypoxia = sum(doLT2_hrs >= 2),
+              Total_hours_LT2 = sum(doLT2_hrs, na.rm = TRUE),
+              Total_hours_LT5 = sum(doLT5_hrs, na.rm = TRUE))
+
+wq_annual <- wq_daily |> 
+    mutate(year = lubridate::year(date)) |> 
+    summarize(.by = c(station, year),
+              nDaysAnyHypoxia = sum(doLT2_hrs > 0),
+              nDays2HrsHypoxia = sum(doLT2_hrs >= 2),
+              Total_hours_LT2 = sum(doLT2_hrs, na.rm = TRUE),
+              Total_hours_LT5 = sum(doLT5_hrs, na.rm = TRUE))
+```
+
+```{r}
+p <- ggplot(wq_annual,
+       aes(x = year,
+           y = nDays2HrsHypoxia,
+           group = station)) +
+    geom_line(col = "gray") +
+    theme_bw()
+
+plotly::ggplotly(p)
+```
+
+```{r}
+hist(wq_annual$Total_hours_LT2, breaks = 30)
+hist(wq_annual$Total_hours_LT2, breaks = 30, ylim = c(0, 200))
+```
+
+
+## station 'normals'  
+
+```{r}
+norms <- wq_annual |> 
+    summarize(.by = station,
+              median_days2hrs = median(nDays2HrsHypoxia, na.rm = TRUE),
+              mean_days2hrs = round(mean(nDays2HrsHypoxia, na.rm = TRUE), 3),
+              q3_days2hrs = quantile(nDays2HrsHypoxia, prob = 0.75, na.rm = TRUE),
+              median_hours_LT2 = median(Total_hours_LT2, na.rm = TRUE),
+              mean_hours_LT2 = round(mean(Total_hours_LT2, na.rm = TRUE), 3),
+              median_hours_LT5 = median(Total_hours_LT5, na.rm = TRUE),
+              mean_hours_LT5 = round(mean(Total_hours_LT5, na.rm = TRUE), 3),
+              sd_hours_LT2 = sd(Total_hours_LT2, na.rm = TRUE),
+              sd_hours_LT5 = sd(Total_hours_LT5, na.rm = TRUE))
+```
+
+```{r}
+norms |> 
+    arrange(station) |> 
+    select(station, median_hours_LT2, mean_hours_LT2, median_hours_LT5, mean_hours_LT5) |> 
+    knitr::kable()
+```
+
+## annual anomalies  
+
+Number of hours LT2 or 5, minus the median of each, and divided by the standard deviation of annual total hours (to put everything on a scale with sd 1).  
+
+```{r}
+anom_annual <- left_join(wq_annual, norms, 
+                         by = "station",
+                         relationship = "many-to-one") |> 
+    mutate(anom_LT2 = Total_hours_LT2 - median_hours_LT2,
+           anom_LT5 = Total_hours_LT5 - median_hours_LT5,
+           reserve = substr(station, 1, 3),
+           anom_LT2_scaled = anom_LT2 / sd_hours_LT2,
+           anom_LT5_scaled = anom_LT5 / sd_hours_LT5) |> 
+    select(reserve, station, year, 
+           anom_LT2, anom_LT5,
+           anom_LT2_scaled, anom_LT5_scaled,
+           Total_hours_LT2, median_hours_LT2,
+           Total_hours_LT5, median_hours_LT5)
+    
+```
+
+EXTREMELY ROUGH GRAPHS  
+
+```{r}
+ggplot(anom_annual,
+       aes(x = year,
+           y = anom_LT2,
+           group = station)) +
+    geom_line() +
+    facet_wrap(~reserve, nrow = 6,
+               scales = "free_y") +
+    theme_bw()
+```
+
+
+
+```{r}
+ggplot(anom_annual,
+       aes(x = year,
+           y = anom_LT2_scaled,
+           group = station)) +
+    geom_line() +
+    facet_wrap(~reserve, nrow = 6,
+               scales = "free_y") +
+    theme_bw()
+```
+
+
+
+```{r}
+hist(norms$median_days2hrs, breaks = 30,
+     ylim = c(0, 15))
+
+hist(norms$mean_days2hrs, breaks = 30,
+     ylim = c(0, 15))
+```
+
+```{r}
+norms_annual <- wq_annual |> 
+    summarize(.by = year,
+              median = median(nDays2HrsHypoxia, na.rm = TRUE),
+              mean = mean(nDays2HrsHypoxia, na.rm = TRUE),
+              q3 = quantile(nDays2HrsHypoxia, probs = 0.75, na.rm = TRUE),
+              pct90 = quantile(nDays2HrsHypoxia, probs = 0.9, na.rm = TRUE),
+              pct95 = quantile(nDays2HrsHypoxia, probs = 0.95, na.rm = TRUE))
+```
+
+
+```{r}
+ggplot() +
+    geom_boxplot(data = wq_annual,
+                 aes(x = year,
+                     y = nDays2HrsHypoxia,
+                     group = year)) +
+    geom_line(data = norms_annual,
+              aes(x = year, y = q3),
+              col = "blue",
+              linewidth = 0.8)+
+    geom_line(data = norms_annual,
+              aes(x = year, y = pct90),
+              col = "blue",
+              linewidth = 0.8)+
+    geom_line(data = norms_annual,
+              aes(x = year, y = pct95),
+              col = "blue",
+              linewidth = 0.8) +
+    theme_bw() +
+    labs(y = "Number of days hypoxic, per station")
+```
+
+
+## summarized   
+
+-  how many days each month have >2 hrs of <2 mg/L  
+-  how many days in summer (May - September) have >2 hrs of <2 mg/L
+
+# Monthly proportions  
+
+```{r}
+wq_monthly <- read.csv(here::here("data_wq", 
+                                  "00c_QAQCd_monthly_byType",
+                                  "SWMP_monthlyWQ.csv")) |> 
+    mutate(doLT2 = doLessThan2_total / doLessThan2_nValid,
+           doLT5 = doLessThan5_total / doLessThan5_nValid)
+
+trnds <- read.csv(here::here("data_wq",
+                             "02_calculated_long-term-trends",
+                             "long-term-trends.csv")) |> 
+    mutate(parameter = case_when(parameter %in% c("chla_n", "nh4f", "no23f", "po4f", "turb_median") ~ paste0("log.", parameter),
+                                 .default = parameter))
+
+stns <- readr::read_csv(here::here("data_wq", "sampling_stations.csv")) |> 
+    janitor::clean_names() |> 
+    select(station = station_code, latitude, longitude) |> 
+    mutate(longitude = as.numeric(longitude),
+           longitude = longitude * -1)
+
+wq_monthly <- left_join(wq_monthly, stns, by = "station")
+```
+
+
+What we learned from the national WQ synthesis is that we are seeing widespread increases in water temp and chl a, and widespread decreases in DO mg/L concentration. We are not however seeing increases in hypoxia itself (at least not yet). Maybe some increases in proportion of time DO is below 5 mg/L, though there are also some decreases; but no seeming changes (at the national scale) in proportion of time DO is below 2.   
+
+```{r}
+ggplot(trnds,
+       aes(x = Slope,
+           fill = sig_trend)) +
+  geom_histogram(col = "gray40",
+                 alpha = 0.8,
+                 bins = 30) +
+  facet_wrap(~parameter,
+             scales = "free") +
+  geom_vline(xintercept = 0,
+             linewidth = 1) +
+  scale_fill_brewer(palette = "Set1") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "Histograms of slope (change/yr) for each parameter",
+       fill = "p < 0.05?")
+```
+
+What questions does this lead to?  
+
+If we define hypoxia as "DO < 2 mg/L", we can ask some questions about how widespread it is:  
+
+-  How many stations experienced [at least X months] with [at least X proportion] of hypoxic readings in the last year?  
+-  How many stations experienced [at least X months] within a year, in at least [X] of the last 10 years?  
+-  What is the spread of monthly values where hypoxia is logged at least [10%] of the time?  
+
+
+Let's start with general spread of values for proportion of readings below 2 and 5, and the monthly level, across all stations:  
+
+```{r}
+ggplot(wq_monthly,
+       aes(x = doLT2)) +
+    geom_histogram(fill = "cadetblue3",
+                   col = "gray60") +
+    # scale_y_log10() +
+    theme_bw()
+```
+
+Let's zoom in so it's not all dominated by all the 0s. The blue line is at 10%.   
+
+```{r}
+ggplot(wq_monthly,
+       aes(x = doLT2)) +
+    geom_histogram(fill = "cadetblue3",
+                   col = "gray60") +
+    coord_cartesian(ylim = c(0, 1250)) +
+    geom_vline(xintercept = 0.1,
+               col = "blue",
+               linetype = "dashed") +
+    theme_bw()
+```
+
+Let's summarize by .... month?  
+
+```{r}
+ggplot(wq_monthly,
+       aes(x = doLT2)) +
+    geom_histogram(fill = "cadetblue3",
+                   col = "gray60") +
+    facet_wrap(~month) +
+    coord_cartesian(ylim = c(0, 200)) +
+    geom_vline(xintercept = 0.1,
+               col = "blue",
+               linetype = "dashed") +
+    theme_bw() 
+```
+
+Unsurprisingly, most of the readings occur in June-August, with non-ignorable amounts in May and September.  
+
+I think 10% may be too high of a threshold to be interesting, so I'll take a look at how many stations experience at least 5% of the time being hypoxic in a given month....  
+
+By year and month, how many stations are hypoxic at least 5% and 10% of the time?  
+
+```{r}
+hyp_df <- wq_monthly |> 
+    summarize(.by = c(year, month),
+              pct05 = sum(doLT2 >= 0.05, na.rm = TRUE),
+              pct10 = sum(doLT2 >= 0.1, na.rm = TRUE),
+              pct25 = sum(doLT2 >= 0.25, na.rm = TRUE),
+              pct50 = sum(doLT2 >= 0.5, na.rm = TRUE)) |> 
+    mutate(date = lubridate::ymd(paste(year, month, "01")))
+```
+
+```{r}
+ggplot(hyp_df,
+       aes(x = date)) +
+    geom_line(aes(y = pct05,
+              col = "at least 5% of the time")) +
+    geom_line(aes(y = pct10,
+              col = "at least 10% of the time")) +
+    scale_color_brewer(palette = "Set1") +
+    theme_bw() +
+    labs(y = "# of sites experiencing hypoxia",
+         col = "extent")
+```
+
+```{r}
+ggplot(hyp_df,
+       aes(x = as.factor(month),
+           y = pct05)) +
+    geom_boxplot()
+```
+
+Same pattern as before; more common in summer.  
+
+
+What about those dips in certain years? Does it look like that in boxplot form too?  
+
+```{r}
+ggplot(hyp_df,
+       aes(x = as.factor(year),
+           y = pct05)) +
+    geom_boxplot()
+```
+
+Not super informative, honestly.  
+
+
+Maybe a good question to ask is, where are these stations that experience a lot of hypoxia in summer? Or, out of the 4 key months, how many of those months experience more than 5% hypoxic time at each station?  
+
+```{r}
+hyp_df_summ <- wq_monthly |> 
+    filter(month %in% c(6, 7, 8, 9)) |> 
+    summarize(.by = c(station, year),
+              nMonths = sum(doLT2 >= 0.05, na.rm = TRUE)) |> 
+    left_join(stns, by = "station")
+
+hyp_df_summ2 <- hyp_df_summ |> 
+    summarize(.by = station,
+              nMonths = median(nMonths, na.rm = TRUE)) |> 
+    left_join(stns, by = "station")
+```
+
+```{r}
+ggplot(hyp_df_summ,
+       aes(x = nMonths)) +
+    geom_histogram()
+
+ggplot(hyp_df_summ,
+       aes(x = nMonths)) +
+    geom_histogram() +
+    coord_cartesian(ylim = c(0, 200))
+```
+
+```{r}
+ggplot(hyp_df_summ2,
+       aes(x = nMonths)) +
+    geom_histogram() +
+    ggtitle("Median # months with hypoxia, by station")
+
+ggplot(hyp_df_summ2,
+       aes(x = nMonths)) +
+    geom_histogram() +
+    ggtitle("Median # months with hypoxia, by station") +
+    coord_cartesian(ylim = c(0, 15))
+```
+
+
+Or, if we can interactively choose a year..... and see how many stations had certain amounts of hypoxia that July-August.....  
+
+```{r}
+hyp_summer <- wq_monthly |> 
+    filter(month %in% c(7, 8)) |> 
+    summarize(.by = c(station, year),
+              prop_LT2 = sum(doLessThan2_total, na.rm = TRUE) / sum(doLessThan2_nValid, na.rm = TRUE)) |> 
+    left_join(stns, by = "station")
+```
+
+What sort of categorizing can we do? < 5% of the time; and then what bins?  
+
+Just about 80% of the summer values are under 5%. So we're dividing up about 20% of the remainder into whatever categories we'd like.
+
+```{r}
+hist(hyp_summer$prop_LT2, breaks = 30, ylim = c(0, 200))
+
+# how many do have it less than 5% of the time?
+sum(hyp_summer$prop_LT2 < 0.05, na.rm = TRUE)
+sum(hyp_summer$prop_LT2 < 0.05, na.rm = TRUE) / sum(!is.na(hyp_summer$prop_LT2))
+
+
+
+hyp_summer2 <- hyp_summer |> 
+    filter(prop_LT2 >= 0.05)
+quantile(hyp_summer2$prop_LT2, probs = c(0.25, 0.5, 0.75, 1))    
+```
+
+Greater than 50% seems like an important delineation to me.... How much is that?  
+
+```{r}
+sum(hyp_summer2$prop_LT2 > 0.5, na.rm = TRUE) / sum(!is.na(hyp_summer2$prop_LT2))
+```
+
+About 7%.  
+
+Maybe we do, under 5%; 5-25%; 25-50%; above 50?  
+
+```{r}
+hyp_summer_cat <- hyp_summer |> 
+    mutate(category = case_when(prop_LT2 < 0.05 ~ "< 5%",
+                                 prop_LT2 < 0.25 ~ "5-25%",
+                                 prop_LT2 < 0.5 ~ "25-50%",
+                                 .default = "> 50%"),
+           category = factor(category, levels = c("< 5%",
+                                                  "5-25%",
+                                                  "25-50%",
+                                                  "> 50%")))
+
+save(hyp_summer_cat, file = here::here("data_wq", "summer_hypoxia.rds"))
+```
+
+```{r}
+library(leaflet)
+library(mapview)
+```
+
+```{r}
+palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
+
+hyp_summer_cat |> 
+    filter(year == 2012) |> 
+    leaflet() |> 
+    addProviderTiles(leaflet::providers$Esri.WorldGrayCanvas) |> 
+    addCircleMarkers(lng = ~longitude,
+                     lat = ~latitude,
+                     color = ~palette(category),
+                     fillOpacity = 0.5,
+                     radius = 7) |> 
+    addLegend(position = "topright",
+              pal = palette,
+              values = ~category,
+              title = "Summer hypoxia",
+              opacity = 0.7)
+
+
+```
+

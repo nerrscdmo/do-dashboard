@@ -1,0 +1,13 @@
+---
+title: "Untitled"
+date: today
+format: 
+    html:
+        toc: true
+        toc-location: left
+        code-fold: true
+        embed-resources: true
+warning: false
+message: false
+error: true
+---
