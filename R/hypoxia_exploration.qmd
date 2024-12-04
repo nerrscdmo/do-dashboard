@@ -201,27 +201,70 @@ EXTREMELY ROUGH GRAPHS
 ```{r}
 ggplot(anom_annual,
        aes(x = year,
-           y = anom_LT2,
+           y = anom_LT2_scaled,
            group = station)) +
     geom_line() +
-    facet_wrap(~reserve, nrow = 6,
-               scales = "free_y") +
+    facet_wrap(~reserve, nrow = 6) +
     theme_bw()
 ```
 
 
+Let's highlight years that are >= 1.5 sds higher than the median, and see if we can reasonably call these "bad" years.  
 
 ```{r}
+def_bad <- 1.5
+
+anom2 <- anom_annual |> 
+    filter(anom_LT2_scaled >= def_bad)
 ggplot(anom_annual,
        aes(x = year,
            y = anom_LT2_scaled,
            group = station)) +
     geom_line() +
-    facet_wrap(~reserve, nrow = 6,
-               scales = "free_y") +
+    geom_point(data = anom2,
+               aes(x = year, y = anom_LT2_scaled),
+               col = "red") +
+    facet_wrap(~reserve, nrow = 6) +
     theme_bw()
 ```
 
+Maybe a map has points on it for a reserve that had a bad year, and the points are sized by the number of *stations* having a bad year - bigger point when it's all 4 stations (like rookery bay in 2017 after Irma).  
+
+```{r}
+anom3 <- anom_annual |> 
+    summarize(.by = c(year, reserve),
+              nStations_LT2BadYear = sum(anom_LT2_scaled >= def_bad, na.rm = TRUE),
+              nStations_LT5BadYear = sum(anom_LT5_scaled >= def_bad, na.rm = TRUE),
+              nStationsReporting = length(unique(station)))
+hypox_by_reserve <- anom3
+save(hypox_by_reserve, file = here::here("data_wq", "hypox_by_reserve_annual.RDS"),
+     compress = "xz")
+
+anom4 <- anom3 |> 
+    summarize(.by = year,
+              nStations_LT2BadYear = sum(nStations_LT2BadYear, na.rm = TRUE),
+              nStations_LT5BadYear = sum(nStations_LT5BadYear, na.rm = TRUE))
+```
+
+```{r}
+ggplot(anom4,
+       aes(x = year)) +
+    geom_line(aes(y = nStations_LT2BadYear,
+                  col = "Stations with extreme DO < 2"), 
+              linewidth = 2) +
+    geom_line(aes(y = nStations_LT5BadYear,
+                  col = "Stations with extreme DO < 5"),
+              linewidth = 1) +
+    theme_bw()
+```
+
+The median ("normal") amount of stations experiencing a "bad" hypoxic year is:  
+
+```{r}
+median(anom4$nStations_LT2BadYear)
+```
+
+There are only 5 years in this dataset where 15 or more stations had a "bad" year.  
 
 
 ```{r}

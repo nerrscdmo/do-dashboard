@@ -31,7 +31,7 @@ palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
 # UI ----
 ui <- page_sidebar(
     
-    title = "Interactive Map of Hypoxia",
+    title = "Can our estuaries breathe?",
     # p("This map shows, for each of 150 SWMP stations, how much time is spent hypoxic (DO < 2 mg/L) in July and August of any selected year. The vast majority of stations report <2 mg/L less than 5% of the time. You can select which time groupings to view via checkboxes in the sidebar, and change the year you see with the slider. Each reserve has 4 stations, so you may need to zoom in fairly far to see separation within a reserve."),
     
     sidebar = sidebar(
@@ -51,55 +51,64 @@ ui <- page_sidebar(
     ), # end sidebar
     
     # value boxes
-    layout_columns(
-        fill = FALSE,
+    card(
+        max_height = "600px",
         
-        value_box(
-            title = "# stations reporting",
-            value = textOutput("n_reporting"),
-            showcase = bsicons::bs_icon("droplet-fill"),
-            theme = "text-blue"
-        ),
-        
-        value_box(
-            title = "# stations worse than normal",
-            value = textOutput("n_bad"),
-            showcase = bsicons::bs_icon("exclamation-triangle"),
-            p("11 is typical"),
-            theme = "text-red"
-        ),
-        
-        uiOutput("context_box")
+        layout_columns(
+            fill = FALSE,
+            
+            value_box(
+                title = "# stations reporting",
+                value = textOutput("n_reporting"),
+                showcase = bsicons::bs_icon("droplet-fill"),
+                theme = "text-blue"
+            ),
+            
+            value_box(
+                title = "# stations worse than normal",
+                value = textOutput("n_bad"),
+                showcase = bsicons::bs_icon("exclamation-triangle"),
+                p("11 is typical"),
+                theme = "text-red"
+            ),
+            
+            uiOutput("context_box")
+        )   
     ),
     # https://icons.getbootstrap.com/
     
-    
-    # "bad year" map
+    # Maps in tabs
     card(
-        card_header("Where was hypoxia worse than normal?"),
-        leafletOutput("map2"),
-        min_height = 200
-    ),
-
-    # proportion of time map
-    card(
-        card_header("How much of the summer months was spent hypoxic?"),
-        layout_sidebar(
-            sidebar = sidebar(
-                position = "right",
-
-                # Checkbox for category selection
-                checkboxGroupInput(
-                    "categories",
-                    "Select 'time spent hypoxic in summer' categories to display:",
-                    choices = levels(hyp_summer_cat$category),
-                    selected = unique(hyp_summer_cat$category)[-1]
-                )
+        # card_header("Maps"),
+        min_height = "400px",
+        navset_card_tab(
+            
+            nav_panel(
+                title = "Where was hypoxia bad?",
+                leafletOutput("map2")
             ),
-            leafletOutput("map")
+            
+            nav_panel(
+                title = "How much time was bad?",
+                layout_sidebar(
+                    sidebar = sidebar(
+                        position = "right",
+                        
+                        # Checkbox for category selection
+                        checkboxGroupInput(
+                            "categories",
+                            "Select 'time spent hypoxic in summer' categories to display:",
+                            choices = levels(hyp_summer_cat$category),
+                            selected = unique(hyp_summer_cat$category)[-1]
+                        )
+                    ),
+                    leafletOutput("map")
+                )
+            )
         )
-
     )
+    
+ 
 )  # end ui
 
 
