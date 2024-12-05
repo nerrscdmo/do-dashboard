@@ -3,6 +3,7 @@ library(bslib)
 library(here)
 library(leaflet)
 library(dplyr)
+library(ggplot2)
 
 # Sample data (replace with your hyp_summer_cat data)
 load(here::here("data_wq", "summer_hypoxia.RDS"))
@@ -25,6 +26,8 @@ hypox_by_year <- hypox_by_reserve |>
               nStations_LT5BadYear = sum(nStations_LT5BadYear, na.rm = TRUE),
               nStationsReporting = sum(nStationsReporting, na.rm = TRUE))
 
+
+
 # Create color palette
 palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
 
@@ -33,6 +36,33 @@ ui <- page_sidebar(
     
     title = "Can our estuaries breathe?",
     # p("This map shows, for each of 150 SWMP stations, how much time is spent hypoxic (DO < 2 mg/L) in July and August of any selected year. The vast majority of stations report <2 mg/L less than 5% of the time. You can select which time groupings to view via checkboxes in the sidebar, and change the year you see with the slider. Each reserve has 4 stations, so you may need to zoom in fairly far to see separation within a reserve."),
+    
+    # styling for the slider bar
+    tags$head(
+        tags$style(HTML("
+    .irs-bar {
+      height: 0px !important; /* Match the height of the irs-line */
+      border: 0px solid #444444 !important; /* Remove any borders */
+      background: #444444 !important; /* Inactive color */
+    }
+    .irs-bar-edge {
+      display: none !important; /* Hide the edge to remove unevenness */
+    }
+    .irs-line {
+      height: 2px !important; /* Ensure the line thickness matches the bar */
+      border: 0px solid transparent !important; /* Remove border for consistency */
+      background: #444444 !important; /* Inactive color */
+    }
+    .irs-slider {
+      border: 1px solid #aaa !important; /* Optional: Style the slider handle */
+      background: #fff !important;
+      width: 14px !important; /* Adjust handle size */
+      height: 14px !important;
+      border-radius: 50%; /* Make the handle circular */
+    }
+  "))
+    ),
+    
     
     sidebar = sidebar(
         title = "Selections",
@@ -46,6 +76,12 @@ ui <- page_sidebar(
             value = max(hyp_summer_cat$year),
             step = 1,
             sep = ""
+        ),
+        
+        # overall time series graph
+        div(
+            style = "aspect-ratio: 2/1; width: 100%;",
+            plotOutput("p_ts", width = "100%", height = "100%")
         )
         
     ), # end sidebar
@@ -81,6 +117,7 @@ ui <- page_sidebar(
     card(
         # card_header("Maps"),
         min_height = "400px",
+        full_screen = TRUE,
         navset_card_tab(
             
             nav_panel(
@@ -115,6 +152,7 @@ ui <- page_sidebar(
 # Server ----
 server <- function(input, output, session) {
     
+    # maps ----
     output$map <- renderLeaflet({
         leaflet() |> 
             addTiles() |> 
@@ -167,7 +205,7 @@ server <- function(input, output, session) {
         
     })
     
-    # value boxes
+    # value boxes ----
     filtered3 <- reactive({
         req(input$year)
         hypox_by_year |> 
@@ -200,8 +238,39 @@ server <- function(input, output, session) {
                 showcase = bsicons::bs_icon("emoji-smile")
             )
         }
-        
         })
+    
+    # graphs ----
+    output$p_ts <- renderPlot({
+        ggplot(hypox_by_year,
+               aes(x = year,
+                   y = nStations_LT2BadYear)) +
+            geom_ribbon(aes(x = year,
+                            ymin = 12,
+                            ymax = max(hypox_by_year$nStations_LT2BadYear) + 1),
+                        fill = "red3",
+                        alpha = 0.2) +
+            geom_ribbon(aes(x = year,
+                            ymin = 9,
+                            ymax = 12),
+                        fill = "darkgreen",
+                        alpha = 0.4) +
+            geom_ribbon(aes(x = year,
+                            ymin = min(hypox_by_year$nStations_LT2BadYear) - 1,
+                            ymax = 9),
+                        fill = "green",
+                        alpha = 0.4) +
+            geom_line(linewidth = 1) +
+            geom_vline(xintercept = input$year,
+                       col = "navy") +
+            coord_cartesian(clip = "off") +
+            theme_minimal() +
+            theme(plot.margin = margin(0, 0, 0, 0, "pt")) +
+            theme(axis.text.y = element_blank()) +
+            labs(y = NULL,
+                 x = NULL,
+                 subtitle = "# stations with 'bad' hypoxia")
+    })
 }
 
 # Run the app
