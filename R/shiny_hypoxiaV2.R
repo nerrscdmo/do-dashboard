@@ -37,28 +37,79 @@ ui <- page_sidebar(
     title = "Can our estuaries breathe?",
     # p("This map shows, for each of 150 SWMP stations, how much time is spent hypoxic (DO < 2 mg/L) in July and August of any selected year. The vast majority of stations report <2 mg/L less than 5% of the time. You can select which time groupings to view via checkboxes in the sidebar, and change the year you see with the slider. Each reserve has 4 stations, so you may need to zoom in fairly far to see separation within a reserve."),
     
-    # styling for the slider bar
+    # styling 
     tags$head(
         tags$style(HTML("
+    /* Slider bar styles */
     .irs-bar {
-      height: 0px !important; /* Match the height of the irs-line */
-      border: 0px solid #444444 !important; /* Remove any borders */
-      background: #444444 !important; /* Inactive color */
+      height: 0px !important;
+      border: 0px solid #444444 !important;
+      background: #444444 !important;
     }
     .irs-bar-edge {
-      display: none !important; /* Hide the edge to remove unevenness */
+      display: none !important;
     }
     .irs-line {
-      height: 2px !important; /* Ensure the line thickness matches the bar */
-      border: 0px solid transparent !important; /* Remove border for consistency */
-      background: #444444 !important; /* Inactive color */
+      height: 2px !important;
+      border: 0px solid transparent !important;
+      background: #444444 !important;
     }
     .irs-slider {
-      border: 1px solid #aaa !important; /* Optional: Style the slider handle */
+      border: 1px solid #aaa !important;
       background: #fff !important;
-      width: 14px !important; /* Adjust handle size */
+      width: 14px !important;
       height: 14px !important;
-      border-radius: 50%; /* Make the handle circular */
+      border-radius: 50%;
+    }
+
+        /* Make cards responsive */
+    .card {
+      height: auto !important;
+      min-height: 200px;
+      max-height: none !important;  /* Remove max-height constraint */
+    }
+
+    /* Value box base styles */
+    .bslib-value-box {
+      height: auto !important;
+      min-height: 120px;
+    }
+
+    /* Small screens (default) */
+    .bslib-value-box .value-box-title {
+      font-size: 12px !important;
+    }
+    .bslib-value-box .value-box-showcase {
+      font-size: 18px !important;
+    }
+    .bslib-value-box .value-box-icon {
+      font-size: 24px !important;
+    }
+
+    /* Medium screens */
+    @media (min-width: 768px) {
+      .bslib-value-box .value-box-title {
+        font-size: 14px !important;
+      }
+      .bslib-value-box .value-box-showcase {
+        font-size: 24px !important;
+      }
+      .bslib-value-box .value-box-icon {
+        font-size: 32px !important;
+      }
+    }
+
+    /* Large screens */
+    @media (min-width: 1200px) {
+      .bslib-value-box .value-box-title {
+        font-size: 16px !important;
+      }
+      .bslib-value-box .value-box-showcase {
+        font-size: 30px !important;
+      }
+      .bslib-value-box .value-box-icon {
+        font-size: 40px !important;
+      }
     }
   "))
     ),
@@ -88,7 +139,7 @@ ui <- page_sidebar(
     
     # value boxes
     card(
-        max_height = "600px",
+        max_height = "500px",
         
         layout_columns(
             fill = FALSE,
@@ -109,8 +160,8 @@ ui <- page_sidebar(
             ),
             
             uiOutput("context_box")
-        )   
-    ),
+        )
+        ),
     # https://icons.getbootstrap.com/
     
     # Maps in tabs
