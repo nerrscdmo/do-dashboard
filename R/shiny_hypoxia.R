@@ -106,6 +106,7 @@ ui <- page_sidebar(
 # Server ----
 server <- function(input, output, session) {
     
+    # maps ----
     output$map <- renderLeaflet({
         leaflet() |> 
             addTiles() |> 
@@ -127,13 +128,22 @@ server <- function(input, output, session) {
     
     # Update outputs based on selected categories and year
     observe({
+        years_stations <- hyp_summer_cat |> 
+            filter(year == input$year)
+        
         # proportion of time map
         filtered_data <- hyp_summer_cat |> 
             filter(year == input$year, category %in% input$categories)
         
-        leafletProxy("map", data = filtered_data) |>
+        leafletProxy("map", data = years_stations) |>
             clearMarkers() |> 
+            addCircleMarkers(data = years_stations,
+                             lng = ~longitude,
+                             lat = ~latitude,
+                             color = "gray20",
+                             radius = 2) |> 
             addCircleMarkers(
+                data = filtered_data,
                 lng = ~longitude,
                 lat = ~latitude,
                 color = ~palette(category),
@@ -146,9 +156,15 @@ server <- function(input, output, session) {
             filter(year == input$year,
                    nStations_LT2BadYear > 0)
         
-        leafletProxy("map2", data = filtered2) |> 
+        leafletProxy("map2") |> 
             clearMarkers() |> 
+            addCircleMarkers(data = years_stations,
+                             lng = ~longitude,
+                             lat = ~latitude,
+                             color = "gray20",
+                             radius = 2) |> 
             addCircleMarkers(
+                data = filtered2,
                 lng = ~longitude,
                 lat = ~latitude,
                 color = "red",
@@ -158,7 +174,7 @@ server <- function(input, output, session) {
         
     })
     
-    # value boxes
+    # value boxes ----
     filtered3 <- reactive({
         req(input$year)
         hypox_by_year |> 

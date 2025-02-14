@@ -1,7 +1,11 @@
 ---
 title: "Exploration of DO and hypoxia graphs"
 date: today
+prefer-html: true
 format: 
+    pdf:
+        echo: false
+        toc: true
     html:
         toc: true
         toc-location: left
@@ -143,7 +147,9 @@ p <- ggplot(wq_annual,
     geom_line(col = "gray") +
     theme_bw()
 
-plotly::ggplotly(p)
+p
+
+# plotly::ggplotly(p)
 ```
 
 ```{r}
@@ -151,8 +157,14 @@ hist(wq_annual$Total_hours_LT2, breaks = 30)
 hist(wq_annual$Total_hours_LT2, breaks = 30, ylim = c(0, 200))
 ```
 
+# Map 1: Where is hypoxia worse than normal  
 
 ## station 'normals'  
+
+For the table below, the number of hours where DO was less than 2 ("...LT2") and less than 5 ("...LT5") were calculated for each year at each station by counting the number of readings less than each threshold and dividing by 4. The numbers in the table are the means and medians of these yearly totals by station.  
+
+
+Missing data are simply omitted from calculations; I am hoping that a similar amount of data is missing from each station each year, so we don't introduce bias and any variability is just part of the general noise.  
 
 ```{r}
 norms <- wq_annual |> 
@@ -177,7 +189,7 @@ norms |>
 
 ## annual anomalies  
 
-Number of hours LT2 or 5, minus the median of each, and divided by the standard deviation of annual total hours (to put everything on a scale with sd 1).  
+Number of hours LT2 or 5, minus the median of each, and divided by the standard deviation of annual total hours (to put everything on a scale with sd 1). Not dividing by sd made the scales very extreme (skim through the table above for an idea of scale - some stations normally have 1-2 thousand hours of hypoxia per year).    
 
 ```{r}
 anom_annual <- left_join(wq_annual, norms, 
@@ -198,7 +210,13 @@ anom_annual <- left_join(wq_annual, norms,
 
 EXTREMELY ROUGH GRAPHS  
 
+These are saved as pdfs so you can view them fulll-screen.  
+
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
+
+
 ggplot(anom_annual,
        aes(x = year,
            y = anom_LT2_scaled,
@@ -206,12 +224,21 @@ ggplot(anom_annual,
     geom_line() +
     facet_wrap(~reserve, nrow = 6) +
     theme_bw()
+
+ggsave(here::here("figs", "20241207-03-normalizedHypox.pdf"),
+       width = 16, height = 8, units = "in")
 ```
 
 
 Let's highlight years that are >= 1.5 sds higher than the median, and see if we can reasonably call these "bad" years.  
 
+# Update - use 2 sds
+
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
+
+
 def_bad <- 1.5
 
 anom2 <- anom_annual |> 
@@ -226,6 +253,9 @@ ggplot(anom_annual,
                col = "red") +
     facet_wrap(~reserve, nrow = 6) +
     theme_bw()
+
+ggsave(here::here("figs", "20241207-04-normalizedHypox_BadHighlighted.pdf"),
+       width = 16, height = 8, units = "in")
 ```
 
 Maybe a map has points on it for a reserve that had a bad year, and the points are sized by the number of *stations* having a bad year - bigger point when it's all 4 stations (like rookery bay in 2017 after Irma).  
@@ -245,6 +275,9 @@ anom4 <- anom3 |>
               nStations_LT2BadYear = sum(nStations_LT2BadYear, na.rm = TRUE),
               nStations_LT5BadYear = sum(nStations_LT5BadYear, na.rm = TRUE))
 ```
+
+
+We've talked some about the difference between 2 and 5, and at least on the normalized scale, the numbers are exactly the same:  
 
 ```{r}
 ggplot(anom4,
@@ -309,12 +342,14 @@ ggplot() +
 ```
 
 
+# General - Monthly proportions  
+
 ## summarized   
 
 -  how many days each month have >2 hrs of <2 mg/L  
 -  how many days in summer (May - September) have >2 hrs of <2 mg/L
 
-# Monthly proportions  
+
 
 ```{r}
 wq_monthly <- read.csv(here::here("data_wq", 
@@ -342,6 +377,9 @@ wq_monthly <- left_join(wq_monthly, stns, by = "station")
 What we learned from the national WQ synthesis is that we are seeing widespread increases in water temp and chl a, and widespread decreases in DO mg/L concentration. We are not however seeing increases in hypoxia itself (at least not yet). Maybe some increases in proportion of time DO is below 5 mg/L, though there are also some decreases; but no seeming changes (at the national scale) in proportion of time DO is below 2.   
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 6
+
 ggplot(trnds,
        aes(x = Slope,
            fill = sig_trend)) +
@@ -458,6 +496,7 @@ ggplot(hyp_df,
 
 Not super informative, honestly.  
 
+# Map 2: Summer hypoxia  
 
 Maybe a good question to ask is, where are these stations that experience a lot of hypoxia in summer? Or, out of the 4 key months, how many of those months experience more than 5% hypoxic time at each station?  
 
@@ -552,27 +591,27 @@ save(hyp_summer_cat, file = here::here("data_wq", "summer_hypoxia.rds"))
 ```
 
 ```{r}
-library(leaflet)
-library(mapview)
+# library(leaflet)
+# library(mapview)
 ```
 
 ```{r}
-palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
-
-hyp_summer_cat |> 
-    filter(year == 2012) |> 
-    leaflet() |> 
-    addProviderTiles(leaflet::providers$Esri.WorldGrayCanvas) |> 
-    addCircleMarkers(lng = ~longitude,
-                     lat = ~latitude,
-                     color = ~palette(category),
-                     fillOpacity = 0.5,
-                     radius = 7) |> 
-    addLegend(position = "topright",
-              pal = palette,
-              values = ~category,
-              title = "Summer hypoxia",
-              opacity = 0.7)
+# palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
+# 
+# hyp_summer_cat |> 
+#     filter(year == 2012) |> 
+#     leaflet() |> 
+#     addProviderTiles(leaflet::providers$Esri.WorldGrayCanvas) |> 
+#     addCircleMarkers(lng = ~longitude,
+#                      lat = ~latitude,
+#                      color = ~palette(category),
+#                      fillOpacity = 0.5,
+#                      radius = 7) |> 
+#     addLegend(position = "topright",
+#               pal = palette,
+#               values = ~category,
+#               title = "Summer hypoxia",
+#               opacity = 0.7)
 
 
 ```

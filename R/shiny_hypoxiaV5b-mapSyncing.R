@@ -3,6 +3,8 @@ library(bslib)
 library(bsicons)
 library(here)
 library(leaflet)
+library(leaflet.minicharts)
+library(manipulateWidget)
 library(dplyr)
 library(ggplot2)
 
@@ -31,8 +33,8 @@ hyp_summer_cat$value = hyp_summer_cat$prop_LT2 * 100
 
 
 
-# Create color palette
-# palette <- colorFactor(palette = "YlOrRd", domain = hyp_summer_cat$category)
+# color palette for proportion of time map
+palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
 
 # UI ----
 ui <- page_fillable(
@@ -40,7 +42,7 @@ ui <- page_fillable(
     layout_columns(
         col_widths = c("5, 7"),
         h1("Can our estuaries breathe?"),
-        p("Here's some info about the data display. The default display shows the most recent year, but you can change that with the slider bar below. Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
+        p("Select a year to focus on, and your threshold of interest for 'low DO'. The default display shows values compared to 2 mg/L for the most recent year. Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
         
     ),
        
@@ -75,11 +77,11 @@ ui <- page_fillable(
     
     # value boxes
     card(
-        max_height = "200px",
+        height = "150px",
         layout_columns(
             fill = TRUE,
+            col_widths = c(5, 1, 3, 3),
             
-            list(
                 # year selection
                 sliderInput(
                     "year",
@@ -90,16 +92,24 @@ ui <- page_fillable(
                     step = 1,
                     sep = ""
                 ),
+            
+            p(),
                 
                 # time series graph
-                div(
-                    style = "aspect-ratio: 2/1; width: 100%;",
-                    plotOutput("p_ts", width = "100%", height = "50%")
-                )
-            ),
+                # div(
+                #     style = "aspect-ratio: 2/1; width: 100%;",
+                #     plotOutput("p_ts", width = "100%", height = "50%")
+                # )
+           
+            
+            radioButtons("threshold_sel", "Select DO threshold",
+                               choices = c("2 mg/L", "5 mg/L"),
+                               selected = "2 mg/L"),
+            
+            checkboxInput("sync_maps", "Sync Maps", value = TRUE)
             
             
-            uiOutput("context_box"), 
+            # uiOutput("context_box"), 
             
             # value_box(
             #     title = "# stations reporting",
@@ -108,44 +118,26 @@ ui <- page_fillable(
             #     theme = "text-blue"
             # ),
 
-            value_box(
-                title = "# stations worse than normal",
-                value = textOutput("n_bad"),
-                showcase = bsicons::bs_icon("exclamation-triangle"),
-                p("11 is typical"),
-                theme = "text-red"
-            )
+            # value_box(
+            #     title = "# stations worse than normal",
+            #     value = textOutput("n_bad"),
+            #     showcase = bsicons::bs_icon("exclamation-triangle"),
+            #     p("11 is typical"),
+            #     theme = "text-red"
+            # )
         )
     ),
     
  # Maps in tabs
-        layout_columns(
-            card(
-                full_screen = TRUE,
-                card_header("Where was hypoxia worse than usual?",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "'Worse than usual' means the % of time hypoxic this year was more than 2 standard deviations above the mean annual % time hypoxic for the station."
-                            )
-                ), 
-                leafletOutput("map2")
-            ),
-            card(
-                full_screen = TRUE,
-                card_header("How much of the year was hypoxic?",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "% of valid readings for the year where DO < 2 mg/L"
-                            ),
-                            
-                ),
-                
-                sliderInput("cutoff_range", "Value Range to Display:",
-                            min = 0, max = 100, value = c(10, 90), step = 1),
-                
-                leafletOutput("map")
-            )
-        )
+card(
+    div(
+        style = "display: flex; align-items: center; gap: 10px; width: 100%;",
+        strong("Show stations in the range:"),  # Label
+        sliderInput("cutoff_range", label = NULL, min = 0, max = 100, value = c(5, 90), step = 1, width = "100%")
+    ),
+    
+    combineWidgetsOutput('TwoMaps', width = "100%", height = "600px")
+)
 
 )  # end ui
 
@@ -158,39 +150,17 @@ server <- function(input, output, session) {
         leaflet() |> 
             addTiles() |> 
             setView(lng = -98.5, lat = 39.8, zoom = 2) # |>  # Central US, zoomed out to include AK and HI
-            # addLegend(position = "topright",
-            #           pal = palette,
-            #           values = hyp_summer_cat$category,
-            #           title = "Summer hypoxia",
-            #           opacity = 0.7)
+            
     })
     
     output$map2 <- renderLeaflet({
         leaflet() |> 
             addTiles() |> 
             setView(lng = -98.5, lat = 39.8, zoom = 2) # |>  # Central US, zoomed out to include AK and HI
-        # addLegend(position = "topright",
-        #           opacity = 0.7)
     })
     
     # Update outputs based on selected categories and year
     observe({
-        # proportion of time map
-        # filtered_data <- hyp_summer_cat |> 
-        #     filter(year == input$year, category %in% input$categories)
-        # 
-        # leafletProxy("map", data = filtered_data) |>
-        #     clearMarkers() |> 
-        #     addCircleMarkers(
-        #         lng = ~longitude,
-        #         lat = ~latitude,
-        #         color = ~palette(category),
-        #         fillOpacity = 0.7,
-        #         radius = 7
-        #     )
-        
-        palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
-        
         # Filter data based on the selected year and cutoff value
         filtered_data <- hyp_summer_cat |> 
             filter(year == input$year, 
@@ -207,10 +177,11 @@ server <- function(input, output, session) {
                 radius = 7
             ) |> 
             clearControls() |> 
-            addLegend(position = "topright",
+            addLegend(position = "bottomright",
                       pal = palette,
-                      values = hyp_summer_cat$value,  # Keep full range in legend
-                      title = "Percent of time with DO < 2",
+                      values = c(0, 100),  # Keep full range in legend
+                      bins = c(0, 25, 50, 75, 100),
+                      title = "% of year",
                       opacity = 0.7)
         
         # "bad year" map
@@ -230,6 +201,15 @@ server <- function(input, output, session) {
         
     })
     
+    output$TwoMaps <- renderCombineWidgets({
+        map1 <- leafletProxy("map") |> 
+            syncWith("maps")
+        map2 <- leafletProxy("map2") |> 
+            syncWith("maps")
+        combineWidgets(map1, map2, ncol = 2)
+    })
+    
+   
     # value boxes ----
     filtered3 <- reactive({
         req(input$year)
