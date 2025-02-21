@@ -30,11 +30,14 @@ stn_trends_long <- stn_trends |>
 
 # color palettes
 # palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
-palette_unus <- colorFactor(palette = c("#2c7bb6", "#d7191c"),  # from 5-class RdYlBu, colorblind safe
-                            domain = c(0, 1))
+palette_unus <- colorFactor(palette = c("#2166AC", "#B2182B"),  # from Tol's BuRd
+                            levels = c(0, 1))
 
-palette_trnd <- colorFactor(palette = c("#2c7bb6", "#d7191c", "#ffffbf", "gray40"),
-                            domain = c("increasing", "decreasing", "no trend", "not calculated"))
+palette_trnd.mgl <- colorFactor(palette = c("#2166AC", "#B2182B", "#FFEE99", "#7F7F7F"),  # from Tol's BuRd EXCEPT for 'not calcd' - need to check this
+                            levels = c("increasing", "decreasing", "no trend", "not calculated"))
+
+palette_trnd.thrsh <- colorFactor(palette = c("#762A83", "#1B7837", "#FFEE99", "#7F7F7F"),  # from Tol's PRGn
+                                levels = c("increasing", "decreasing", "no trend", "not calculated"))
 
 # UI ----
 ui <- page_fillable(
@@ -172,8 +175,9 @@ ui <- page_fillable(
                                                             "not calculated"),
                                                inline = TRUE)
                         )
-                    )
-                )
+                    ),  # end column layout
+                    placement = "right",
+                )   # end popover
             ),
             
             # sidebar layout, for station popups
@@ -266,6 +270,7 @@ ui <- page_fillable(
                         
                     )
                     ), # end wrapper div
+                    placement = "left",
                     options = list(
                         html = TRUE,
                         container = "body",
@@ -287,7 +292,11 @@ ui <- page_fillable(
             )
         )
         
-    ) # end column layout
+    ), # end column layout
+    
+    card(
+        p("Maybe this is where things should show up when a point is clicked on the maps")
+    )
     
 )  # end ui
 
@@ -298,16 +307,29 @@ server <- function(input, output, session) {
     # maps ----
     output$map_trends <- renderLeaflet({
         leaflet() |> 
-            addTiles() |> 
-            setView(lng = -98.5, lat = 39.8, zoom = 2) # |>  # Central US, zoomed out to include AK and HI
-            
+            addTiles(group = "Default (OpenStreetMap") |> 
+            addProviderTiles(provider = providers$CartoDB.Positron,
+                             group = "Positron (CartoDB)") |> 
+            addProviderTiles(provider = providers$Esri,
+                             group = "Esri") |> 
+            setView(lng = -98.5, lat = 39.8, zoom = 2)  |>  # Central US, zoomed out to include AK and HI
+            addLayersControl(baseGroups = c("Default (OpenStreetMap)",
+                                            "Positron (CartoDB)",
+                                            "Esri"))
     })
     
     output$map_timeLow <- renderLeaflet({
         leaflet() |> 
-            addTiles() |> 
-            setView(lng = -98.5, lat = 39.8, zoom = 2) # |>  # Central US, zoomed out to include AK and HI
-    })
+            addTiles(group = "Default (OpenStreetMap") |> 
+            addProviderTiles(provider = providers$CartoDB.Positron,
+                             group = "Positron (CartoDB)") |> 
+            addProviderTiles(provider = providers$Esri,
+                             group = "Esri") |> 
+            setView(lng = -98.5, lat = 39.8, zoom = 2)  |>  # Central US, zoomed out to include AK and HI
+            addLayersControl(baseGroups = c("Default (OpenStreetMap)",
+                                            "Positron (CartoDB)",
+                                            "Esri"))
+        })
     
     # Update map_timeLow based on selections
     observe({
@@ -321,6 +343,9 @@ server <- function(input, output, session) {
             mutate(size1 = case_when(pct <= 3 ~ 3,
                                      3 < pct & pct <= 7 ~ pct,
                                      7 < pct ~ 4 + sqrt(pct)))
+            # mutate(size1 = case_when(pct <= 3 ~ 3,
+            #                          3 < pct & pct <= 7 ~ pct,
+            #                          .default = sqrt(pct*10/pi)))
         
         rows_unusual <- which(tomap_sub$unusual == 1)
         rows_typical <- which(tomap_sub$unusual == 0)
@@ -366,6 +391,13 @@ server <- function(input, output, session) {
         filtered2 <- stn_trends_long |> 
             filter(param == input$trendParam_sel,
                    map_color %in% input$trendShow_sel)
+        
+        # use the right color palette function
+        palette_trnd <- if(input$trendParam_sel == "domgl_median") {
+            palette_trnd.mgl
+        } else {
+            palette_trnd.thrsh
+        }
         
         leafletProxy("map_trends", data = filtered2) |> 
             clearMarkers() |> 
