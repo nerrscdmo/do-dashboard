@@ -57,6 +57,15 @@ ui <- page_fillable(
             font-size: 14px important;
         }
         
+        p {
+        font-size: 14px !important;
+        }
+        
+        .accordion-button {
+        font-size: 14px !important;
+        color: blue;
+        }
+        
         /* Option text - 12px */
         .form-check-label,
         div.shiny-options-group label,  /* Radio and checkbox group options */
