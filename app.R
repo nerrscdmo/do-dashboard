@@ -181,7 +181,8 @@ ui <- page_fillable(
                 sidebar = sidebar(p("Sidebar! Find the arrow to collapse me!"),
                                   br(),
                                   p("This is where information about a station will be displayed when someone clicks the station on the map."),
-                                  position = "left"),
+                                  position = "left",
+                                  open = FALSE),
                 # map
                 leafletOutput("map_trends")
             )
@@ -268,7 +269,7 @@ ui <- page_fillable(
                     options = list(
                         html = TRUE,
                         container = "body",
-                        template = '<div class="popover" role="tooltip" style="max-width: 800px; width: 400px;"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
+                        template = '<div class="popover" role="tooltip" style="max-width: 600px; width: 600px;"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
                     )
                 ) # end popover
             ), # end div
@@ -279,7 +280,8 @@ ui <- page_fillable(
                 sidebar = sidebar(p("Sidebar! Find the arrow to collapse me!"),
                                   br(),
                                   p("This is where information about a station will be displayed when someone clicks the station on the map."),
-                                  position = "right"),
+                                  position = "right",
+                                  open = FALSE),
                 # map
                 leafletOutput("map_timeLow")
             )
