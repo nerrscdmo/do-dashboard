@@ -198,19 +198,10 @@ ui <- page_fillable(
                         ) # end tooltip
             ), # end header
             
-            # inputs in a popover; div so text can trigger
-            div(
-                style = "text-align: left; margin: 0; padding: 0.1rem 1rem;",
-                popover(
-                    span(
-                        bsicons::bs_icon("gear"),
-                        "Map Options ", 
-                        style = "color: #333333; font-weight: bold; font-size: 14px;"
-                    ),
-                    
-                    title = "Map Options",
-                    div(
-                   
+            accordion(
+                open = FALSE,
+                accordion_panel(
+                    "Map Options",
                     # stack slider bars for year and range selection
                     layout_column_wrap(
                         width = 1/2,
@@ -264,14 +255,8 @@ ui <- page_fillable(
                         )
                         
                     )
-                    ), # end wrapper div
-                    options = list(
-                        html = TRUE,
-                        container = "body",
-                        template = '<div class="popover" role="tooltip" style="max-width: 800px; width: 400px;"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
-                    )
-                ) # end popover
-            ), # end div
+                )
+            ), # end accordion
             
             
             # sidebar layout, for station popups
