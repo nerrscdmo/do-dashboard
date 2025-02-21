@@ -112,56 +112,41 @@ ui <- page_fillable(
     ),  # end styling
     
     
-    # column layout so map cards are side-by-side
+    # I want my map cards to make columns
     layout_columns(
         
         
         # card 1: trend map ----
+        # choice for user: which trend to see
         card(
             full_screen = TRUE,
             
-            card_header("Where is DO changing over time?",
+            card_header("Where is DO concentration increasing or decreasing over time?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
-                        ), # end tooltip
-             ), # end header
-            
+                            "Some info here about how trends were calculated if a station had at least 5 years of data"
+                        ) # end tooltip
+            ), # end header
             
             # selections
-            # inputs in a popover; div so text can trigger
-            div(
-                style = "text-align: right; margin: 0; padding: 0.1rem 1rem;",
-                popover(
-                    title = "Map Options",
-                    span(
-                        "Map Options ", 
-                        bsicons::bs_icon("gear"),
-                        style = "color: #333333; font-weight: bold; font-size: 14px;"
-                    ),
-                    
-                    # column layout for inputs
+            accordion(
+                open = FALSE,
+                accordion_panel(
+                    "Map Options",
                     layout_columns(
                         # choose trend parameter
-                        div(
-                            "Select trend to view: ",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
-                            ),
-                            radioButtons("trendParam_sel", label = NULL,
-                                         choiceNames = c("Median DO Concentration",
-                                                         "Time DO < 2",
-                                                         "Time DO < 5"),
-                                         choiceValues = c("domgl_median",
-                                                          "LT2",
-                                                          "LT5"),
-                                         selected = "domgl_median")
-                        ),
+                        radioButtons("trendParam_sel", "Select trend to view:",
+                                     choiceNames = c("Median DO Concentration",
+                                                     "Time DO < 2",
+                                                     "Time DO < 5"),
+                                     choiceValues = c("domgl_median",
+                                                      "LT2",
+                                                      "LT5"),
+                                     selected = "domgl_median"),
                         
                         # choose which values to see
                         div(class = "two-col-checks",
-                            checkboxGroupInput("trendShow_sel", "Select results to include:",
+                            checkboxGroupInput("trendShow_sel", "Select trends to include:",
                                                choices = c("increasing",
                                                            "decreasing",
                                                            "no trend",
@@ -176,18 +161,14 @@ ui <- page_fillable(
                 )
             ),
             
-            # sidebar layout, for station popups
-            layout_sidebar(
-                sidebar = sidebar(p("Sidebar! Find the arrow to collapse me!"),
-                                  br(),
-                                  p("This is where information about a station will be displayed when someone clicks the station on the map."),
-                                  position = "left"),
-                # map
-                leafletOutput("map_trends")
-            )
+            # map
+            leafletOutput("map_trends")
         ), # end card 1
-        
+            
         # card 2: low do map ----
+        # choices for user: year; range time below threshold; 
+        # threshold for do; size blue points by time?;
+        # unusual stations/typical stations/both
         card(
             full_screen = TRUE,
             
@@ -240,34 +221,16 @@ ui <- page_fillable(
                                            selected = c(0, 1)),
                         
                         # size typical points by amount?
-                        div(
-                            style = "display: flex; align-items: top; gap: 5px;",
-                            checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
-                                          value = FALSE),
-                            tooltip(
-                                bsicons::bs_icon("info-circle", 
-                                                 width = "50", height = "20",
-                                                 # style = " color: blue;",
-                                                 color = "blue"
-                                                 ),
-                                "Points will be sized according to the percentage of time DO was below the threshold"
-                            )
-                        )
+                        checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
+                                      value = FALSE)
                         
                     )
                 )
             ), # end accordion
             
             
-            # sidebar layout, for station popups
-            layout_sidebar(
-                sidebar = sidebar(p("Sidebar! Find the arrow to collapse me!"),
-                                  br(),
-                                  p("This is where information about a station will be displayed when someone clicks the station on the map."),
-                                  position = "right"),
-                # map
-                leafletOutput("map_timeLow")
-            )
+            # map
+            leafletOutput("map_timeLow")
         )
         
     ) # end column layout
