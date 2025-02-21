@@ -33,7 +33,7 @@ stn_trends_long <- stn_trends |>
 palette_unus <- colorFactor(palette = c("#2c7bb6", "#d7191c"),  # from 5-class RdYlBu, colorblind safe
                             domain = c(0, 1))
 
-palette_trnd <- colorFactor(palette = c("#2c7bb6", "#d7191c", "#ffffbf", "gray"),
+palette_trnd <- colorFactor(palette = c("#2c7bb6", "#d7191c", "#ffffbf", "gray40"),
                             domain = c("increasing", "decreasing", "no trend", "not calculated"))
 
 # UI ----
@@ -43,14 +43,40 @@ ui <- page_fillable(
     layout_columns(
         col_widths = c(4, 3, 5),
         h1("Can our estuaries breathe?"),
-        checkboxInput("sync_maps", "Sync Maps", value = TRUE),
-        p("Select a year to focus on, and your threshold of interest for 'low DO'. The default display shows values compared to 2 mg/L for the most recent year. Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
+        checkboxInput("sync_maps", "Zoom and Pan Maps Together", value = TRUE),
+        p("Select a year to focus on, and your threshold of interest for 'low DO'. The default display shows values compared to 5 mg/L for the most recent year. Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
         
     ),
     
-    # general css and html styling 
+    # css/html styling ---- 
     tags$head(
         tags$style(HTML("
+        /* Main input labels - 14px */
+        .shiny-input-container > label,  /* Main labels */
+        .form-label { 
+            font-size: 14px important;
+        }
+        
+        /* Option text - 12px */
+        .form-check-label,
+        div.shiny-options-group label,  /* Radio and checkbox group options */
+        .radio label,
+        .checkbox label {
+            font-size: 14px !important;
+        }
+        
+         /* Style for two-column checkbox group */
+        .two-col-checks .form-check {
+            display: inline-block;
+            width: 50%;
+        }
+        
+        /* Slider text */
+        .irs-grid-text, .irs-min, .irs-max, .irs-single, .irs-from, .irs-to {
+            font-size: 12px !important;
+        }
+        
+        
     /* Slider bar styles */
     .irs-bar {
       height: 0px !important;
@@ -94,27 +120,36 @@ ui <- page_fillable(
             ), # end header
             
             # selections
-            layout_columns(
-                # choose trend parameter
-                radioButtons("trendParam_sel", "Select trend to view:",
-                             choiceNames = c("Median DO Concentration",
-                                             "Time DO < 2",
-                                             "Time DO < 5"),
-                             choiceValues = c("domgl_median",
-                                              "LT2",
-                                              "LT5"),
-                             selected = "domgl_median"),
-                
-                # choose which values to see
-                checkboxGroupInput("trendShow_sel", "Select trends to include:",
-                                   choices = c("increasing",
-                                               "decreasing",
-                                               "no trend",
-                                               "not calculated"),
-                                   selected = c("increasing",
-                                                "decreasing",
-                                                "no trend",
-                                                "not calculated"))
+            accordion(
+                open = FALSE,
+                accordion_panel(
+                    "Map Options",
+                    layout_columns(
+                        # choose trend parameter
+                        radioButtons("trendParam_sel", "Select trend to view:",
+                                     choiceNames = c("Median DO Concentration",
+                                                     "Time DO < 2",
+                                                     "Time DO < 5"),
+                                     choiceValues = c("domgl_median",
+                                                      "LT2",
+                                                      "LT5"),
+                                     selected = "domgl_median"),
+                        
+                        # choose which values to see
+                        div(class = "two-col-checks",
+                            checkboxGroupInput("trendShow_sel", "Select trends to include:",
+                                               choices = c("increasing",
+                                                           "decreasing",
+                                                           "no trend",
+                                                           "not calculated"),
+                                               selected = c("increasing",
+                                                            "decreasing",
+                                                            "no trend",
+                                                            "not calculated"),
+                                               inline = TRUE)
+                        )
+                    )
+                )
             ),
             
             # map
@@ -135,48 +170,54 @@ ui <- page_fillable(
                         ) # end tooltip
             ), # end header
             
-            # selections - again in columns
-            layout_columns(
-                col_widths = c(6, 2, 2, 2),
-                
-                # stack slider bars for year and range selection
-                list(
-                    # year selection
-                    sliderInput(
-                        "year",
-                        "Select Year:",
-                        min = min(tomap$year),
-                        max = max(tomap$year),
-                        value = max(tomap$year),
-                        step = 1,
-                        sep = ""
+            accordion(
+                open = FALSE,
+                accordion_panel(
+                    "Map Options",
+                    # stack slider bars for year and range selection
+                    layout_column_wrap(
+                        width = 1/2,
+                        # year selection
+                        sliderInput(
+                            "year",
+                            "Select Year:",
+                            min = min(tomap$year),
+                            max = max(tomap$year),
+                            value = max(tomap$year),
+                            step = 1,
+                            sep = ""
+                        ),
+                        # range selection
+                        sliderInput("cutoff_range", 
+                                    "Limit to stations in this range of low DO frequency", 
+                                    min = 0, 
+                                    max = 100, 
+                                    value = c(0, 100), 
+                                    step = 1)
                     ),
-                    # range selection
-                    sliderInput("cutoff_range", 
-                                "Limit to stations in this range", 
-                                min = 0, 
-                                max = 100, 
-                                value = c(0, 100), 
-                                step = 1)
-                ),
-                
-                # choose threshold
-                radioButtons("threshold_sel", "Select DO threshold",
-                             choiceNames = c("2 mg/L", "5 mg/L"),
-                             choiceValues = c("LT2", "LT5"),
-                             selected = "LT5"),
-                
-                # station type
-                checkboxGroupInput("unus_sel", "Show stations in range:",
-                                   choiceNames = c("typical", "unusual"),
-                                   choiceValues = c(0, 1),
-                                   selected = c(0, 1)),
-                
-                # size typical points by amount?
-                checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
-                              value = FALSE)
-                
-            ), # end selections
+                    
+                    layout_column_wrap(
+                        # col_widths = c(6, 2, 2, 2),
+                        width = 1/3,
+                        # choose threshold
+                        radioButtons("threshold_sel", "DO threshold",
+                                     choiceNames = c("2 mg/L", "5 mg/L"),
+                                     choiceValues = c("LT2", "LT5"),
+                                     selected = "LT5"),
+                        
+                        # station type
+                        checkboxGroupInput("unus_sel", "Show stations where this low DO frequency is:",
+                                           choiceNames = c("typical", "unusual"),
+                                           choiceValues = c(0, 1),
+                                           selected = c(0, 1)),
+                        
+                        # size typical points by amount?
+                        checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
+                                      value = FALSE)
+                        
+                    )
+                )
+            ), # end accordion
             
             
             # map
