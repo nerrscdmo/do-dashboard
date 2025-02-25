@@ -50,9 +50,9 @@ ui <- page_fillable(
         h1("Can our estuaries breathe?"),
         # checkboxInput("sync_maps", "Zoom and Pan Maps Together", value = TRUE),
         p("Here is where we might say something about how time spent below thresholds seems to be patchy, and is different every year. The default for the map is to show how much of the most recent year was spent with DO < 5 mg/L. Maybe make an info box for why this is important? Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
-        
+
     ),
-    
+    # 
     # css/html styling ---- 
     tags$head(
         tags$style(HTML("
@@ -127,7 +127,7 @@ ui <- page_fillable(
         
         # map tabs
         navset_card_tab(
-            
+            full_screen = TRUE,
             
             # card 1: trend map ----
             nav_panel(
@@ -197,7 +197,8 @@ ui <- page_fillable(
                     # )
                 # ),  # end selections popover div
                 
-                # sidebar layout, for disclaimer
+                # sidebar layout
+                
                 layout_sidebar(
                     sidebar = sidebar(title = "Map Options",
                                       width = 300,
