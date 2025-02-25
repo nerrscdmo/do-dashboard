@@ -342,10 +342,11 @@ server <- function(input, output, session) {
                    unusual %in% input$unus_sel) |> 
             mutate(size1 = case_when(pct <= 3 ~ 3,
                                      3 < pct & pct <= 7 ~ pct,
-                                     7 < pct ~ 4 + sqrt(pct)))
-            # mutate(size1 = case_when(pct <= 3 ~ 3,
-            #                          3 < pct & pct <= 7 ~ pct,
-            #                          .default = sqrt(pct*10/pi)))
+                                     7 < pct ~ 4 + sqrt(pct)),
+                   # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
+                   size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
+                                     .default = size1))
+
         
         rows_unusual <- which(tomap_sub$unusual == 1)
         rows_typical <- which(tomap_sub$unusual == 0)
@@ -357,8 +358,7 @@ server <- function(input, output, session) {
                 group = "in typical range",
                 lng = ~long,
                 lat = ~lat,
-                radius = 3,
-                # radius = ~size1,
+                radius = ~size1,
                 stroke = FALSE,
                 popup = ~as.character(round(pct, 1)),
                 opacity = 0.5,
