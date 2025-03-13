@@ -3,9 +3,12 @@ library(bslib)
 library(bsicons)
 library(here)
 library(leaflet)
+# library(leaflegend)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+
+# setup ----
 
 # bring in data frames (calculations have been made outside the app)
 load(here::here("data_wq", "do_dataframes.RData"))
@@ -28,7 +31,11 @@ stn_trends_long <- stn_trends |>
     left_join(distinct(select(tomap, station, lat, long)),
               by = "station")
 
-# color palettes
+tomap <- tomap |> 
+    mutate(size = case_when(sqrt(pct) <= 3 ~ 3,
+                            .default = sqrt(pct)))
+
+# color palettes ----
 # palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
 palette_unus <- colorFactor(palette = c("#2166AC", "#B2182B"),  # from Tol's BuRd
                             levels = c(0, 1))
@@ -40,6 +47,37 @@ palette_trnd.mgl <- colorFactor(palette = c("#2166AC", "#B2182B", "#FFEE99", "#7
 
 palette_trnd.thrsh <- colorFactor(palette = c("#762A83", "#1B7837", "#FFEE99", "#7F7F7F"),  # from Tol's PRGn
                                 levels = c("increasing", "decreasing", "no trend", "not calculated"))
+
+# legend setup ----
+# custom function for sizing
+addLegendCustom <- function(map, sizes, labels, colors = "black", position = "bottomright", opacity = 0.8) {
+    legend_html <- paste0(
+        "<div style='background-color: white; padding: 10px; border-radius: 5px; width: 100px;'>",
+        "<div style='text-align: center; font-weight: bold; margin-bottom: 5px;'>% of year</div>",  # Centered title
+        paste0(
+            "<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;'>",
+            # Wrapper div to center circles
+            "<div style='display: flex; justify-content: center; align-items: center; width: 50px;'>",
+            "<div style='width: ", sizes * 2, "px; height: ", sizes * 2, "px; ",
+            "background-color: ", colors, "; border-radius: 50%; opacity: ", opacity, ";'></div>",
+            "</div>",
+            # Right-aligned text
+            "<div style='flex-grow: 1; text-align: right; padding-left: 10px;'>", labels, "</div>",
+            "</div>"
+            , collapse = ""),
+        "</div>"
+    )
+    
+    return(addControl(map, html = HTML(legend_html), position = position))
+}
+
+# legend df
+legend_sizes <- data.frame(
+    value = c(3, 20, 30, 50, 70),
+    label = c("<10", "20", "30", "50", "70")
+) |> 
+    mutate(size = case_when(sqrt(value) <= 3 ~ 3,
+                            .default = sqrt(value)))
 
 # UI ----
 ui <- page_fillable(
@@ -635,9 +673,7 @@ server <- function(input, output, session) {
                    pct >= input$cutoff_range[1],
                    pct <= input$cutoff_range[2],
                    unusual %in% input$unus_sel) |> 
-            mutate(size1 = case_when(pct <= 3 ~ 3,
-                                     3 < pct & pct <= 7 ~ pct,
-                                     7 < pct ~ 4 + sqrt(pct)),
+            mutate(size1 = size,
                    # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
                    size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
                                      .default = size1))
@@ -673,6 +709,15 @@ server <- function(input, output, session) {
                 fillOpacity = 0.7 
             ) |> 
             clearControls() |> 
+            addLegendCustom(
+                sizes = legend_sizes$size, 
+                labels = legend_sizes$label,
+                colors = "black",
+                position = "bottomright",   # Custom position
+                opacity = 0.5            # Custom opacity (0 to 1)
+            ) |> 
+            # addLegendSize(values = ~size1, color = "black",
+            #               shape = "circle", breaks = 5) |> 
             addLegend(position = "bottomright",
                       colors = palette_unus(c(0, 1)),
                       labels = c("no", "yes"),
@@ -690,9 +735,7 @@ server <- function(input, output, session) {
                    pct >= input$cutoff_range2[1],
                    pct <= input$cutoff_range2[2],
                    unusual %in% input$unus_sel2) |> 
-            mutate(size1 = case_when(pct <= 3 ~ 3,
-                                     3 < pct & pct <= 7 ~ pct,
-                                     7 < pct ~ 4 + sqrt(pct)),
+            mutate(size1 = size,
                    # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
                    size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
                                      .default = size1))
