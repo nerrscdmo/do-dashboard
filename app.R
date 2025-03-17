@@ -3,7 +3,8 @@ library(bslib)
 library(bsicons)
 library(here)
 library(leaflet)
-# library(leaflegend)
+library(leaflegend)
+library(htmltools)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -31,11 +32,7 @@ stn_trends_long <- stn_trends |>
     left_join(distinct(select(tomap, station, lat, long)),
               by = "station")
 
-tomap <- tomap |> 
-    mutate(size = case_when(sqrt(pct) <= 3 ~ 3,
-                            .default = sqrt(pct)))
-
-# color palettes ----
+# color palettes and shapes ----
 # palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
 palette_unus <- colorFactor(palette = c("#2166AC", "#B2182B"),  # from Tol's BuRd
                             levels = c(0, 1))
@@ -47,6 +44,85 @@ palette_trnd.mgl <- colorFactor(palette = c("#2166AC", "#B2182B", "#FFEE99", "#7
 
 palette_trnd.thrsh <- colorFactor(palette = c("#762A83", "#1B7837", "#FFEE99", "#7F7F7F"),  # from Tol's PRGn
                                 levels = c("increasing", "decreasing", "no trend", "not calculated"))
+# use circles for typical and squares for unusual - change here if desired
+shape_assignment <- function(x){
+    case_when(is.na(x) ~ "diamond",
+              x == 0 ~ "circle",
+              x == 1 ~ "rect",
+              .default = "triangle")
+}
+
+
+# big map data frame ----
+# define everything, for later custom creation of symbols
+tomap <- tomap |> 
+    mutate(size = case_when(sqrt(pct) <= 3 ~ 3,
+                            is.na(pct) ~ 3,
+                            .default = sqrt(pct)),
+           size = size + 1,                           # for slightly bigger symbols
+           shape = shape_assignment(unusual),
+           color_unus = palette_unus(unusual),
+           color_time.hypoxic = palette_time.hypoxic(pct),
+           pct_rounded = round(pct))
+
+# size legend data frame ----
+legend_sizes <- data.frame(
+    value = c(3, 25, 50, 75),
+    label = c("<10", "25", "50", "75")
+) |> 
+    mutate(size = case_when(sqrt(value) <= 3 ~ 3,
+                            .default = sqrt(value)),
+           size = size + 1)
+
+# symbol setup----
+
+# TYPICAL VS UNUSUAL
+# make the grid for symbols
+symbols_unus.grid <- data.frame(
+    unusual = c(0, 1)
+) |> 
+    mutate(shape = shape_assignment(unusual),
+           color = palette_unus(unusual))
+# make the symbols
+symbols_unus <- Map(
+    f = makeSymbol,
+    shape = symbols_unus.grid$shape,
+    fillColor = symbols_unus.grid$color,
+    color = "black",
+    opacity = 0.5,
+    height = 12,
+    width = 12
+)
+# add the url to the time grid symbol data frame for joining with 'tomap'
+symbols_unus.grid$symbol_unus <- unlist(symbols_unus)
+# join to the mapping df
+tomap <- left_join(tomap, symbols_unus.grid,
+                   by = "unusual")
+
+# TIME HYPOXIC
+# make combinations of typical/unusual and every rounded percent
+symbols_time.grid <- expand.grid(
+    unusual = c(0, 1),
+    pcts = c(0:100)
+) |> 
+    mutate(shape = shape_assignment(unusual),
+           color = palette_time.hypoxic(pcts))    
+# generate all those symbols
+symbols_time.hypoxic <- Map(
+    f = makeSymbol,
+    shape = symbols_time.grid$shape,
+    fillColor = symbols_time.grid$color,
+    color = "black",
+    opacity = 0.5,
+    height = 12,
+    width = 12
+)
+# add the url to the time grid symbol data frame for joining with 'tomap'
+symbols_time.grid$symbol_time <- unlist(symbols_time.hypoxic)
+# join to the mapping df
+tomap <- left_join(tomap, symbols_time.grid,
+                   by = c("unusual",
+                          "pct_rounded" = "pcts"))
 
 # legend setup ----
 # custom function for sizing
@@ -71,13 +147,7 @@ addLegendCustom <- function(map, sizes, labels, colors = "black", position = "bo
     return(addControl(map, html = HTML(legend_html), position = position))
 }
 
-# legend df
-legend_sizes <- data.frame(
-    value = c(3, 20, 30, 50, 70),
-    label = c("<10", "20", "30", "50", "70")
-) |> 
-    mutate(size = case_when(sqrt(value) <= 3 ~ 3,
-                            .default = sqrt(value)))
+
 
 # UI ----
 ui <- page_fillable(
@@ -169,7 +239,7 @@ ui <- page_fillable(
             
             # card 1: trend map ----
             nav_panel(
-                "Map trends through time",
+                "Trends",
                 full_screen = TRUE,
                 
                 card_header("Where is DO changing over time?",
@@ -281,7 +351,7 @@ ui <- page_fillable(
             
             # card 2: low do map ----
             nav_panel(
-                "Yearly Map of Low DO",
+                "Low DO year-by-year",
                 full_screen = TRUE,
                 
                 card_header("In the selected year, how much time was DO below the selected threshold?",
@@ -369,7 +439,7 @@ ui <- page_fillable(
                 # ), # end column layout for year selector and more options
                 
                 
-                # sidebar layout, for station popups
+                # sidebar layout, for map options
                 layout_sidebar(
                     sidebar = sidebar(title = "Map Options",
                                       width = 300,
@@ -386,14 +456,23 @@ ui <- page_fillable(
                                           step = 1,
                                           sep = ""
                                       ),
+                                      
+                                      # choose how to color points
+                                      radioButtons("color_sel", "Color points by:",
+                                                   choiceNames = c("typical or unusual",
+                                                                   "% of year with low DO"),
+                                                   choiceValues = c("col_unus",
+                                                                    "col_time.hypoxic"),
+                                                   selected = "col_unus"),
+                                      
                                       # choose threshold
                                       radioButtons("threshold_sel", "DO threshold",
-                                                   choiceNames = c("2 mg/L", "5 mg/L"),
+                                                   choiceNames = c("<2 mg/L", "<5 mg/L"),
                                                    choiceValues = c("LT2", "LT5"),
                                                    selected = "LT5"),
                                       
                                       # station type
-                                      checkboxGroupInput("unus_sel", "Show stations where this low DO frequency is:",
+                                      checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
                                                          choiceNames = c("typical", "unusual"),
                                                          choiceValues = c(0, 1),
                                                          selected = c(0, 1)),
@@ -668,45 +747,54 @@ server <- function(input, output, session) {
     observe({
         # Filter data based on the selected year and cutoff value
         tomap_sub <- tomap |> 
+            mutate(rownum = row_number(),
+                   size1 = size,
+                   # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
+                   size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 4,
+                                     .default = size1)) |> 
             filter(year == input$year, 
                    threshold == input$threshold_sel,
                    pct >= input$cutoff_range[1],
                    pct <= input$cutoff_range[2],
-                   unusual %in% input$unus_sel) |> 
-            mutate(size1 = size,
-                   # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
-                   size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
-                                     .default = size1))
-            
+                   unusual %in% input$unus_sel)  
+
+        
+        # choose symbols based on what user wants to color by:
+        tomap_sub <- tomap_sub |> 
+            mutate(symbol = case_when(
+                input$color_sel == "col_unus" ~ symbol_unus,
+                input$color_sel == "col_time.hypoxic" ~ symbol_time
+            ))
+        
+        # figure out typical and unusual rows
         rows_unusual <- which(tomap_sub$unusual == 1)
         rows_typical <- which(tomap_sub$unusual == 0)
         
+        
         leafletProxy("map_timeLow", data = tomap_sub) |>
             clearMarkers() |> 
-            addCircleMarkers(
+            addMarkers(
                 data = tomap_sub[rows_typical, ],
                 group = "in typical range",
                 lng = ~long,
                 lat = ~lat,
-                radius = ~size1,
-                stroke = FALSE,
-                popup = ~as.character(round(pct, 1)),
-                opacity = 0.5,
-                fill = TRUE,
-                fillColor = ~palette_unus(0),
-                fillOpacity = 0.5
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                popup = ~as.character(round(pct, 1))
             ) |> 
-            addCircleMarkers(
+            addMarkers(
                 data = tomap_sub[rows_unusual, ],
                 lng = ~long,
                 lat = ~lat,
-                radius = ~size1,
-                stroke = FALSE,
-                popup = ~as.character(round(pct, 1)),
-                opacity = 0.5,
-                fill = TRUE,
-                fillColor = ~palette_unus(1),
-                fillOpacity = 0.7 
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                popup = ~as.character(round(pct, 1)) 
             ) |> 
             clearControls() |> 
             addLegendCustom(
