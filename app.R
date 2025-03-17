@@ -90,8 +90,8 @@ symbols_unus <- Map(
     fillColor = symbols_unus.grid$color,
     color = "black",
     opacity = 0.5,
-    height = 12,
-    width = 12
+    height = 20,
+    width = 20
 )
 # add the url to the time grid symbol data frame for joining with 'tomap'
 symbols_unus.grid$symbol_unus <- unlist(symbols_unus)
@@ -114,8 +114,8 @@ symbols_time.hypoxic <- Map(
     fillColor = symbols_time.grid$color,
     color = "black",
     opacity = 0.5,
-    height = 12,
-    width = 12
+    height = 20,
+    width = 20
 )
 # add the url to the time grid symbol data frame for joining with 'tomap'
 symbols_time.grid$symbol_time <- unlist(symbols_time.hypoxic)
@@ -502,155 +502,155 @@ ui <- page_fillable(
                     # map
                     leafletOutput("map_timeLow")
                 )
-            ),  # end card 2
+            )  # end card 2
             
             
-            # card 3: low do map, but colored by time hypoxic ----
-            nav_panel(
-                "Low DO by Color",
-                full_screen = TRUE,
-                
-                card_header("In the selected year, how much time was DO below the selected threshold?",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "Info here about % of readings, and how typical/unusual was determined"
-                            ) # end tooltip
-                ), # end header
-                
-                p("Some stations naturally spend much of the year with low DO. At other stations, low DO can be a sign of pollution or other negative human impacts. Just because a point here is dark does not mean the station is doing poorly."),
-                
-                # # year selector and popover for other options
-                # layout_column_wrap(
-                #     width = 1/2,
-                #     # year selection
-                #     sliderInput(
-                #         "year",
-                #         "Select Year:",
-                #         min = min(tomap$year),
-                #         max = max(tomap$year),
-                #         value = max(tomap$year),
-                #         step = 1,
-                #         sep = ""
-                #     ),
-                #     # popover
-                #     # inputs in a popover; div so text can trigger
-                #     div(
-                #         style = "text-align: right; margin: 0; padding: 0.1rem 1rem;",
-                #         popover(
-                #             span(
-                #                 bsicons::bs_icon("gear"),
-                #                 "Other Options ", 
-                #                 style = "color: #333333; font-weight: bold; font-size: 14px;"
-                #             ),
-                #             
-                #             title = "Map Options",
-                #             div(
-                #                 # range selection
-                #                 sliderInput("cutoff_range", 
-                #                             "Limit to stations in this range of low DO frequency", 
-                #                             min = 0, 
-                #                             max = 100, 
-                #                             value = c(0, 100), 
-                #                             step = 1),
-                #                 layout_column_wrap(
-                #                     # col_widths = c(6, 2, 2, 2),
-                #                     width = 1/3,
-                #                     # choose threshold
-                #                     radioButtons("threshold_sel", "DO threshold",
-                #                                  choiceNames = c("2 mg/L", "5 mg/L"),
-                #                                  choiceValues = c("LT2", "LT5"),
-                #                                  selected = "LT5"),
-                #                     
-                #                     # station type
-                #                     checkboxGroupInput("unus_sel", "Show stations where this low DO frequency is:",
-                #                                        choiceNames = c("typical", "unusual"),
-                #                                        choiceValues = c(0, 1),
-                #                                        selected = c(0, 1)),
-                #                     
-                #                     # size typical points by amount?
-                #                     div(
-                #                         style = "display: flex; align-items: top; gap: 5px;",
-                #                         checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
-                #                                       value = FALSE),
-                #                         tooltip(
-                #                             bsicons::bs_icon("info-circle", 
-                #                                              width = "50", height = "20",
-                #                                              # style = " color: blue;",
-                #                                              color = "blue"
-                #                             ),
-                #                             "Points will be sized according to the percentage of time DO was below the threshold"
-                #                         )
-                #                     )
-                #                     
-                #                 )
-                #             ), # end wrapper div
-                #             placement = "left",
-                #             options = list(
-                #                 html = TRUE,
-                #                 container = "body",
-                #                 template = '<div class="popover" role="tooltip" style="max-width: 400px; width: 400px;"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
-                #             )
-                #         ) # end popover
-                #     ) # end div
-                # ), # end column layout for year selector and more options
-                
-                
-                 # sidebar layout, for station popups
-                layout_sidebar(
-                    sidebar = sidebar(title = "Map Options",
-                                      width = 300,
-                                      position = "left",
-                                      open = TRUE,
-                                      # year selection
-                                      sliderInput(
-                                          "year2",
-                                          "Select Year:",
-                                          min = min(tomap$year),
-                                          max = max(tomap$year),
-                                          value = max(tomap$year),
-                                          step = 1,
-                                          sep = ""
-                                      ),
-                                          # choose threshold
-                                          radioButtons("threshold_sel2", "DO threshold",
-                                                       choiceNames = c("2 mg/L", "5 mg/L"),
-                                                       choiceValues = c("LT2", "LT5"),
-                                                       selected = "LT5"),
-                                          
-                                          # station type
-                                          checkboxGroupInput("unus_sel2", "Show stations where this low DO frequency is:",
-                                                             choiceNames = c("typical", "unusual"),
-                                                             choiceValues = c(0, 1),
-                                                             selected = c(0, 1)),
-                                          
-                                      #     # size typical points by amount?
-                                      #     div(
-                                      #         style = "display: flex; align-items: top; gap: 5px;",
-                                      #         checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
-                                      #                       value = FALSE),
-                                      #         tooltip(
-                                      #             bsicons::bs_icon("info-circle", 
-                                      #                              width = "50", height = "20",
-                                      #                              # style = " color: blue;",
-                                      #                              color = "blue"
-                                      #             ),
-                                      #             "Points will be sized according to the percentage of time DO was below the threshold"
-                                      #         )
-                                      #     
-                                      # ),
-                                      sliderInput("cutoff_range2", 
-                                                  "Limit to stations in this range of low DO frequency", 
-                                                  min = 0, 
-                                                  max = 100, 
-                                                  value = c(0, 100), 
-                                                  step = 1)
-                                      ), # end sidebar
-                    # map
-                    leafletOutput("map_timeLow_color")
-                )
-            ) # end card 3
-            
-            
+            # # card 3: low do map, but colored by time hypoxic ----
+            # nav_panel(
+            #     "Low DO by Color",
+            #     full_screen = TRUE,
+            #     
+            #     card_header("In the selected year, how much time was DO below the selected threshold?",
+            #                 tooltip(
+            #                     bsicons::bs_icon("info-circle"),
+            #                     "Info here about % of readings, and how typical/unusual was determined"
+            #                 ) # end tooltip
+            #     ), # end header
+            #     
+            #     p("Some stations naturally spend much of the year with low DO. At other stations, low DO can be a sign of pollution or other negative human impacts. Just because a point here is dark does not mean the station is doing poorly."),
+            #     
+            #     # # year selector and popover for other options
+            #     # layout_column_wrap(
+            #     #     width = 1/2,
+            #     #     # year selection
+            #     #     sliderInput(
+            #     #         "year",
+            #     #         "Select Year:",
+            #     #         min = min(tomap$year),
+            #     #         max = max(tomap$year),
+            #     #         value = max(tomap$year),
+            #     #         step = 1,
+            #     #         sep = ""
+            #     #     ),
+            #     #     # popover
+            #     #     # inputs in a popover; div so text can trigger
+            #     #     div(
+            #     #         style = "text-align: right; margin: 0; padding: 0.1rem 1rem;",
+            #     #         popover(
+            #     #             span(
+            #     #                 bsicons::bs_icon("gear"),
+            #     #                 "Other Options ", 
+            #     #                 style = "color: #333333; font-weight: bold; font-size: 14px;"
+            #     #             ),
+            #     #             
+            #     #             title = "Map Options",
+            #     #             div(
+            #     #                 # range selection
+            #     #                 sliderInput("cutoff_range", 
+            #     #                             "Limit to stations in this range of low DO frequency", 
+            #     #                             min = 0, 
+            #     #                             max = 100, 
+            #     #                             value = c(0, 100), 
+            #     #                             step = 1),
+            #     #                 layout_column_wrap(
+            #     #                     # col_widths = c(6, 2, 2, 2),
+            #     #                     width = 1/3,
+            #     #                     # choose threshold
+            #     #                     radioButtons("threshold_sel", "DO threshold",
+            #     #                                  choiceNames = c("2 mg/L", "5 mg/L"),
+            #     #                                  choiceValues = c("LT2", "LT5"),
+            #     #                                  selected = "LT5"),
+            #     #                     
+            #     #                     # station type
+            #     #                     checkboxGroupInput("unus_sel", "Show stations where this low DO frequency is:",
+            #     #                                        choiceNames = c("typical", "unusual"),
+            #     #                                        choiceValues = c(0, 1),
+            #     #                                        selected = c(0, 1)),
+            #     #                     
+            #     #                     # size typical points by amount?
+            #     #                     div(
+            #     #                         style = "display: flex; align-items: top; gap: 5px;",
+            #     #                         checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
+            #     #                                       value = FALSE),
+            #     #                         tooltip(
+            #     #                             bsicons::bs_icon("info-circle", 
+            #     #                                              width = "50", height = "20",
+            #     #                                              # style = " color: blue;",
+            #     #                                              color = "blue"
+            #     #                             ),
+            #     #                             "Points will be sized according to the percentage of time DO was below the threshold"
+            #     #                         )
+            #     #                     )
+            #     #                     
+            #     #                 )
+            #     #             ), # end wrapper div
+            #     #             placement = "left",
+            #     #             options = list(
+            #     #                 html = TRUE,
+            #     #                 container = "body",
+            #     #                 template = '<div class="popover" role="tooltip" style="max-width: 400px; width: 400px;"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
+            #     #             )
+            #     #         ) # end popover
+            #     #     ) # end div
+            #     # ), # end column layout for year selector and more options
+            #     
+            #     
+            #      # sidebar layout, for station popups
+            #     layout_sidebar(
+            #         sidebar = sidebar(title = "Map Options",
+            #                           width = 300,
+            #                           position = "left",
+            #                           open = TRUE,
+            #                           # year selection
+            #                           sliderInput(
+            #                               "year2",
+            #                               "Select Year:",
+            #                               min = min(tomap$year),
+            #                               max = max(tomap$year),
+            #                               value = max(tomap$year),
+            #                               step = 1,
+            #                               sep = ""
+            #                           ),
+            #                               # choose threshold
+            #                               radioButtons("threshold_sel2", "DO threshold",
+            #                                            choiceNames = c("2 mg/L", "5 mg/L"),
+            #                                            choiceValues = c("LT2", "LT5"),
+            #                                            selected = "LT5"),
+            #                               
+            #                               # station type
+            #                               checkboxGroupInput("unus_sel2", "Show stations where this low DO frequency is:",
+            #                                                  choiceNames = c("typical", "unusual"),
+            #                                                  choiceValues = c(0, 1),
+            #                                                  selected = c(0, 1)),
+            #                               
+            #                           #     # size typical points by amount?
+            #                           #     div(
+            #                           #         style = "display: flex; align-items: top; gap: 5px;",
+            #                           #         checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
+            #                           #                       value = FALSE),
+            #                           #         tooltip(
+            #                           #             bsicons::bs_icon("info-circle", 
+            #                           #                              width = "50", height = "20",
+            #                           #                              # style = " color: blue;",
+            #                           #                              color = "blue"
+            #                           #             ),
+            #                           #             "Points will be sized according to the percentage of time DO was below the threshold"
+            #                           #         )
+            #                           #     
+            #                           # ),
+            #                           sliderInput("cutoff_range2", 
+            #                                       "Limit to stations in this range of low DO frequency", 
+            #                                       min = 0, 
+            #                                       max = 100, 
+            #                                       value = c(0, 100), 
+            #                                       step = 1)
+            #                           ), # end sidebar
+            #         # map
+            #         leafletOutput("map_timeLow_color")
+            #     )
+            # ) # end card 3
+
+
         ) # end nav-panel layout
         
         
@@ -814,60 +814,60 @@ server <- function(input, output, session) {
     })
     
     # timeLow_color ----
-    # Update map_timeLow_color based on selections
-    observe({
-        # Filter data based on the selected year and cutoff value
-        tomap_sub <- tomap |> 
-            filter(year == input$year2, 
-                   threshold == input$threshold_sel2,
-                   pct >= input$cutoff_range2[1],
-                   pct <= input$cutoff_range2[2],
-                   unusual %in% input$unus_sel2) |> 
-            mutate(size1 = size,
-                   # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
-                   size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
-                                     .default = size1))
-        
-        rows_unusual <- which(tomap_sub$unusual == 1)
-        rows_typical <- which(tomap_sub$unusual == 0)
-        
-        leafletProxy("map_timeLow_color", data = tomap_sub) |>
-            clearMarkers() |> 
-            addCircleMarkers(
-                data = tomap_sub[rows_typical, ],
-                group = "in typical range",
-                lng = ~long,
-                lat = ~lat,
-                radius = 4,
-                # stroke = FALSE,
-                popup = ~as.character(round(pct, 1)),
-                opacity = 0.5,
-                fill = TRUE,
-                color = ~palette_time.hypoxic(pct),
-                fillColor = ~palette_time.hypoxic(pct),
-                fillOpacity = 0.5
-            ) |> 
-            addCircleMarkers(
-                data = tomap_sub[rows_unusual, ],
-                lng = ~long,
-                lat = ~lat,
-                radius = 4,
-                # stroke = FALSE,
-                popup = ~as.character(round(pct, 1)),
-                opacity = 0.5,
-                fill = TRUE,
-                color = ~palette_time.hypoxic(pct),
-                fillColor = ~palette_time.hypoxic(pct),
-                fillOpacity = 0.7 
-            ) |> 
-            clearControls() |> 
-            addLegend(position = "bottomright",
-                      colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
-                      labels = c(0, 25, 50, 75, 100),
-                      title = "% of year",
-                      opacity = 0.7)
-    })
-    
+    # # Update map_timeLow_color based on selections
+    # observe({
+    #     # Filter data based on the selected year and cutoff value
+    #     tomap_sub <- tomap |> 
+    #         filter(year == input$year2, 
+    #                threshold == input$threshold_sel2,
+    #                pct >= input$cutoff_range2[1],
+    #                pct <= input$cutoff_range2[2],
+    #                unusual %in% input$unus_sel2) |> 
+    #         mutate(size1 = size,
+    #                # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
+    #                size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 3,
+    #                                  .default = size1))
+    #     
+    #     rows_unusual <- which(tomap_sub$unusual == 1)
+    #     rows_typical <- which(tomap_sub$unusual == 0)
+    #     
+    #     leafletProxy("map_timeLow_color", data = tomap_sub) |>
+    #         clearMarkers() |> 
+    #         addCircleMarkers(
+    #             data = tomap_sub[rows_typical, ],
+    #             group = "in typical range",
+    #             lng = ~long,
+    #             lat = ~lat,
+    #             radius = 4,
+    #             # stroke = FALSE,
+    #             popup = ~as.character(round(pct, 1)),
+    #             opacity = 0.5,
+    #             fill = TRUE,
+    #             color = ~palette_time.hypoxic(pct),
+    #             fillColor = ~palette_time.hypoxic(pct),
+    #             fillOpacity = 0.5
+    #         ) |> 
+    #         addCircleMarkers(
+    #             data = tomap_sub[rows_unusual, ],
+    #             lng = ~long,
+    #             lat = ~lat,
+    #             radius = 4,
+    #             # stroke = FALSE,
+    #             popup = ~as.character(round(pct, 1)),
+    #             opacity = 0.5,
+    #             fill = TRUE,
+    #             color = ~palette_time.hypoxic(pct),
+    #             fillColor = ~palette_time.hypoxic(pct),
+    #             fillOpacity = 0.7 
+    #         ) |> 
+    #         clearControls() |> 
+    #         addLegend(position = "bottomright",
+    #                   colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
+    #                   labels = c(0, 25, 50, 75, 100),
+    #                   title = "% of year",
+    #                   opacity = 0.7)
+    # })
+    # 
     
     
     
