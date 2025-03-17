@@ -354,7 +354,7 @@ ui <- page_fillable(
                 "Low DO year-by-year",
                 full_screen = TRUE,
                 
-                card_header("In the selected year, how much time was DO below the selected threshold?",
+                card_header("In the selected year, how much of the time was DO below the selected threshold?",
                             tooltip(
                                 bsicons::bs_icon("info-circle"),
                                 "Info here about % of readings, and how typical/unusual was determined"
@@ -463,7 +463,23 @@ ui <- page_fillable(
                                                                    "% of year with low DO"),
                                                    choiceValues = c("col_unus",
                                                                     "col_time.hypoxic"),
-                                                   selected = "col_unus"),
+                                                   selected = "col_time.hypoxic"),
+                                      
+                                      # size typical points by amount?
+                                      div(
+                                          style = "display: flex; align-items: top; gap: 5px;",
+                                          checkboxInput("size_sel", "Size points by % time",
+                                                        value = FALSE),
+                                          tooltip(
+                                              bsicons::bs_icon("info-circle", 
+                                                               width = "50", height = "20",
+                                                               # style = " color: blue;",
+                                                               color = "blue"
+                                              ),
+                                              "Points will be sized according to the percentage of time DO was below the selected threshold"
+                                          )
+                                          
+                                      ),
                                       
                                       # choose threshold
                                       radioButtons("threshold_sel", "DO threshold",
@@ -477,21 +493,7 @@ ui <- page_fillable(
                                                          choiceValues = c(0, 1),
                                                          selected = c(0, 1)),
                                       
-                                      # size typical points by amount?
-                                      div(
-                                          style = "display: flex; align-items: top; gap: 5px;",
-                                          checkboxInput("typicalSize_sel", "Size 'typical' points by % time",
-                                                        value = FALSE),
-                                          tooltip(
-                                              bsicons::bs_icon("info-circle", 
-                                                               width = "50", height = "20",
-                                                               # style = " color: blue;",
-                                                               color = "blue"
-                                              ),
-                                              "Points will be sized according to the percentage of time DO was below the threshold"
-                                          )
-                                          
-                                      ),
+                                      
                                       sliderInput("cutoff_range", 
                                                   "Limit to stations in this range of low DO frequency", 
                                                   min = 0, 
@@ -746,12 +748,11 @@ server <- function(input, output, session) {
     # Update map_timeLow based on selections
     observe({
         # Filter data based on the selected year and cutoff value
-        tomap_sub <- tomap |> 
-            mutate(rownum = row_number(),
-                   size1 = size,
-                   # if user wants to size 'typical' points by pct, use size 1. if they don't, make it 3.
-                   size1 = case_when(unusual == 0 & input$typicalSize_sel == FALSE ~ 4,
-                                     .default = size1)) |> 
+        tomap_sub <- tomap |> rowwise() |> 
+            mutate(
+                # if user wants to size points by pct, use size 1. if they don't, make it 4.
+                   size1 = case_when(input$size_sel == FALSE ~ 6,
+                                     .default = size)) |> 
             filter(year == input$year, 
                    threshold == input$threshold_sel,
                    pct >= input$cutoff_range[1],
@@ -771,7 +772,7 @@ server <- function(input, output, session) {
         rows_typical <- which(tomap_sub$unusual == 0)
         
         
-        leafletProxy("map_timeLow", data = tomap_sub) |>
+        m <- leafletProxy("map_timeLow", data = tomap_sub) |>
             clearMarkers() |> 
             addMarkers(
                 data = tomap_sub[rows_typical, ],
@@ -783,7 +784,7 @@ server <- function(input, output, session) {
                     iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
                     iconHeight = size1*2
                 ),
-                popup = ~as.character(round(pct, 1))
+                popup = ~paste(station, year, round(pct, 1))
             ) |> 
             addMarkers(
                 data = tomap_sub[rows_unusual, ],
@@ -796,21 +797,52 @@ server <- function(input, output, session) {
                 ),
                 popup = ~as.character(round(pct, 1)) 
             ) |> 
-            clearControls() |> 
-            addLegendCustom(
-                sizes = legend_sizes$size, 
-                labels = legend_sizes$label,
-                colors = "black",
-                position = "bottomright",   # Custom position
-                opacity = 0.5            # Custom opacity (0 to 1)
-            ) |> 
-            # addLegendSize(values = ~size1, color = "black",
-            #               shape = "circle", breaks = 5) |> 
-            addLegend(position = "bottomright",
-                      colors = palette_unus(c(0, 1)),
-                      labels = c("no", "yes"),
-                      title = "Unusual?",
-                      opacity = 0.7)
+            clearControls() 
+        
+        # deal with legends
+        
+        if(input$size_sel == TRUE){
+            m <- m |> 
+                addLegendCustom(
+                    sizes = legend_sizes$size, 
+                    labels = legend_sizes$label,
+                    colors = "black",
+                    position = "bottomleft",   # Custom position
+                    opacity = 0.5            # Custom opacity (0 to 1)
+                )
+        }
+        
+        if(input$color_sel == "col_unus"){
+            m <- m |> 
+                addLegendSymbol(title = "Shape & Fill",
+                                values = c('typical', 'unusual'), 
+                                shape = c('circle', 'rect'), 
+                                fillColor = palette_unus(c(0, 1)),
+                                color = 'black',
+                                opacity = 0.7,
+                                width = 15,
+                                position = "bottomright")
+        }
+        
+        if(input$color_sel == "col_time.hypoxic"){
+            m <- m |> 
+                addLegendSymbol(title = "Shape",
+                                values = c('typical', 'unusual'), 
+                                shape = c('circle', 'rect'), 
+                                fillColor = palette_time.hypoxic(50),
+                                color = 'black',
+                                opacity = 0.7,
+                                width = 15,
+                                position = "bottomright") |> 
+                addLegend(position = "bottomright",
+                          colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
+                          labels = c(0, 25, 50, 75, 100),
+                          title = "Fill: % of year",
+                          opacity = 0.7)
+        }
+        
+        
+        m
     })
     
     # timeLow_color ----
