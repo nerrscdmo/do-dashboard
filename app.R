@@ -680,7 +680,17 @@ server <- function(input, output, session) {
     })
     
     output$map_timeLow <- renderLeaflet({
-        leaflet() |> 
+        tomap_sub <- tomap |> 
+            mutate(size1 = 6,                   # default to *not* sizing by time low
+                   symbol = symbol_time) |>     # symbol by unus; color by time
+            filter(year == max(tomap$year),
+                   threshold == "LT5")
+        
+        # figure out typical and unusual rows
+        rows_unusual <- which(tomap_sub$unusual == 1)
+        rows_typical <- which(tomap_sub$unusual == 0)
+        
+        m <- leaflet(tomap_sub) |> 
             addTiles(group = "Default (OpenStreetMap") |> 
             addProviderTiles(provider = providers$CartoDB.Positron,
                              group = "Positron (CartoDB)") |> 
@@ -690,20 +700,52 @@ server <- function(input, output, session) {
             addLayersControl(baseGroups = c("Default (OpenStreetMap)",
                                             "Positron (CartoDB)",
                                             "Esri"))
-        })
-    
-    output$map_timeLow_color <- renderLeaflet({
-        leaflet() |> 
-            addTiles(group = "Default (OpenStreetMap") |> 
-            addProviderTiles(provider = providers$CartoDB.Positron,
-                             group = "Positron (CartoDB)") |> 
-            addProviderTiles(provider = providers$Esri,
-                             group = "Esri") |> 
-            setView(lng = -98.5, lat = 42.8, zoom = 2.4)  |>  # Central US, zoomed out to include AK and HI
-            addLayersControl(baseGroups = c("Default (OpenStreetMap)",
-                                            "Positron (CartoDB)",
-                                            "Esri"))
+        # add markers for the initial subset of data
+        m <- m |> 
+            addMarkers(
+                data = tomap_sub[rows_typical, ],
+                group = "in typical range",
+                lng = ~long,
+                lat = ~lat,
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                popup = ~paste(station, year, round(pct, 1))
+            ) |> 
+            addMarkers(
+                data = tomap_sub[rows_unusual, ],
+                lng = ~long,
+                lat = ~lat,
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                popup = ~as.character(round(pct, 1)) 
+            ) |> 
+            clearControls() 
+        
+        # add legends
+        m <- m |> 
+            addLegendSymbol(title = "Shape",
+                            values = c('typical', 'unusual'), 
+                            shape = c('circle', 'rect'), 
+                            fillColor = palette_time.hypoxic(50),
+                            color = 'black',
+                            opacity = 0.7,
+                            width = 15,
+                            position = "bottomright") |> 
+            addLegend(position = "bottomright",
+                      colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
+                      labels = c(0, 25, 50, 75, 100),
+                      title = "Fill: % of year",
+                      opacity = 0.7)
+        
+        m
     })
+    
     
     
     # trends ----
