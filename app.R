@@ -242,14 +242,18 @@ ui <- page_fluid(
     layout_sidebar(
         sidebar = sidebar(id = "stn_sidebar",
                           position = "right",
-                          width = 300,
+                          width = "50%",
                           open = FALSE,
                           title = "Station Information",
-                          "Click on a station from either map and information will appear here",
-                          br(),
-                          uiOutput("station_info"),
-                          "This isn't working yet but what will appear is: station name; trend in DO mg/L; trend in thresholds; typical % of time below each threshold; a time series graph"
-                          ),
+                          uiOutput("plotly_section"),
+                          accordion(
+                              accordion_panel(
+                                  title = "Numeric Summary",
+                                  uiOutput("station_info")
+                              )
+                          )
+                          
+        ),
         
         # column wrap for navsets so they can be fillable 
         layout_column_wrap(
@@ -278,7 +282,7 @@ ui <- page_fluid(
                 
                 layout_sidebar(
                     sidebar = sidebar(title = "Map Options",
-                                      width = 300,
+                                      width = "30%",
                                       position = "left",
                                       open = TRUE,
                                       
@@ -335,7 +339,7 @@ ui <- page_fluid(
                 # sidebar layout, for map options
                 layout_sidebar(
                     sidebar = sidebar(title = "Map Options",
-                                      width = 300,
+                                      width = "30%",
                                       position = "left",
                                       open = TRUE,
                                       
@@ -402,16 +406,12 @@ ui <- page_fluid(
             
         ) # end nav-panel layout
         
-        ) # end column-wrap layout, pretty sure
+        ) # end column-wrap layout
         
         
-    ), # end layout sidebar
+    ) # end layout sidebar
     
-    # station graphs ----
-    
-    uiOutput("plotly_section")
-    
-    
+  
 )  # end ui
 
 
@@ -523,7 +523,9 @@ server <- function(input, output, session) {
                 lng = ~long,
                 lat = ~lat,
                 layerId = ~station,
-                color = ~palette_trnd(map_color),
+                color = "black",
+                weight = 1,
+                fillColor = ~palette_trnd(map_color),
                 fillOpacity = 0.7,
                 radius = 4
             )  |> 
@@ -595,7 +597,7 @@ server <- function(input, output, session) {
                     iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
                     iconHeight = size1*2
                 ),
-                popup = ~as.character(round(pct, 1)) 
+                popup = ~paste(station, year, round(pct, 1)) 
             ) |> 
             clearControls() 
         
@@ -657,7 +659,8 @@ server <- function(input, output, session) {
         selected_station(station_id)
         # Open the sidebar when a station is clicked
         sidebar_toggle("stn_sidebar", open = TRUE)
-    })
+        
+        })
     
     observeEvent(input$map_timeLow_marker_click, {
         click <- input$map_timeLow_marker_click
@@ -665,7 +668,8 @@ server <- function(input, output, session) {
         selected_station(station_id)
         # Open the sidebar when a station is clicked
         sidebar_toggle("stn_sidebar", open = TRUE)
-    })
+        
+        })
     
     # Station table ----
     output$station_info <- renderUI({
@@ -745,16 +749,16 @@ server <- function(input, output, session) {
         
     })
     
-    # Plotly section, with sidebar
+    # Plotly section - with accordion
     output$plotly_section <- renderUI({
         req(selected_station())
         
-        layout_sidebar(
+        accordion(
+            id = "plotly_accordion",
+            open = "Time Series Graphs",
             
             # Plotly options sidebar
-            sidebar = sidebar(
-                id = "plotly_sidebar",
-                open = TRUE,
+            accordion_panel(
                 title = "Graph Options",
                 checkboxGroupInput("thresh_sel", "Select threshold(s) of interest:",
                                    choices = c("2 mg/L", "5 mg/L"),
@@ -764,9 +768,10 @@ server <- function(input, output, session) {
                 checkboxInput("minmax_sel", label = "Add min/max",
                               value = FALSE)
             ),
+            
             # Plotly graph
-            card(
-                card_header(paste0("Data for ", selected_station())),
+            accordion_panel(
+                title = "Time Series Graphs",
                 plotlyOutput("stn_timeSeries")
             )
         )

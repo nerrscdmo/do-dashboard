@@ -150,7 +150,7 @@ graph_do <- function(data_monthly, data_yearly,
     # output
     out <- plotly::subplot(p, p3, nrows = 2, shareX = TRUE, titleY = TRUE, shareY = FALSE) |> 
         layout(
-            title = list(text = paste0("<b>", station, "</b>"), x = 0.5, xanchor = "center", y = 0.98),
+            # title = list(text = paste0("<b>", station, "</b>"), x = 0.5, xanchor = "center", y = 0.98),
             xaxis = list(
                 title = "Date",
                 # range = year_range,  
