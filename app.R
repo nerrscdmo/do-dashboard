@@ -44,7 +44,7 @@ mgl_timeSeries <- stn_mmyr |>
            domgl_median, domgl_p25, domgl_p75,
            domgl_min, domgl_max) |> 
     mutate(date = lubridate::ymd(paste(year, month, "01")))
-    
+
 
 # color palettes and shapes ----
 # palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
@@ -54,10 +54,10 @@ palette_unus <- colorFactor(palette = c("#2166AC", "#B2182B"),  # from Tol's BuR
 palette_time.hypoxic <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
 
 palette_trnd.mgl <- colorFactor(palette = c("#2166AC", "#B2182B", "#FFEE99", "#7F7F7F"),  # from Tol's BuRd EXCEPT for 'not calcd' - need to check this
-                            levels = c("increasing", "decreasing", "no trend", "not calculated"))
+                                levels = c("increasing", "decreasing", "no trend", "not calculated"))
 
 palette_trnd.thrsh <- colorFactor(palette = c("#762A83", "#1B7837", "#FFEE99", "#7F7F7F"),  # from Tol's PRGn
-                                levels = c("increasing", "decreasing", "no trend", "not calculated"))
+                                  levels = c("increasing", "decreasing", "no trend", "not calculated"))
 # use circles for typical and squares for unusual - change here if desired
 shape_assignment <- function(x){
     case_when(is.na(x) ~ "diamond",
@@ -172,7 +172,7 @@ ui <- page_fluid(
         h1("Can our estuaries breathe?"),
         # checkboxInput("sync_maps", "Zoom and Pan Maps Together", value = TRUE),
         p("Here is where we might say something about how time spent below thresholds seems to be patchy, and is different every year. The default for the map is to show how much of the most recent year was spent with DO < 5 mg/L. Maybe make an info box for why this is important? Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
-
+        
     ),
     # 
     # css/html styling ---- 
@@ -234,184 +234,179 @@ ui <- page_fluid(
       height: 14px !important;
       border-radius: 50%;
     }
-
+    
   "))
     ),  # end styling
     
-    # sidebar: stn info ----
+    
     layout_sidebar(
+        # sidebar: stn info ----
         sidebar = sidebar(id = "stn_sidebar",
                           position = "right",
                           width = "50%",
                           open = FALSE,
-                          title = "Station Information",
-                          uiOutput("plotly_section"),
-                          accordion(
-                              accordion_panel(
-                                  title = "Numeric Summary",
-                                  uiOutput("station_info")
-                              )
-                          )
-                          
+                          # title = "Station Information",
+                          uiOutput("station_section")
         ),
+        
         
         # column wrap for navsets so they can be fillable 
         layout_column_wrap(
             width = "100%",
             height = "80vh", 
-        
-        # map tabs ----
-        navset_card_tab(
-            full_screen = TRUE,
             
-            # card 1: trend map ----
-            nav_panel(
-                "Trends",
+            # map tabs ----
+            navset_card_tab(
                 full_screen = TRUE,
                 
-                card_header("Where is DO changing over time?",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
-                            ), # end tooltip
-                ), # end header
-                
-                
-                
-                # sidebar layout
-                
-                layout_sidebar(
-                    sidebar = sidebar(title = "Map Options",
-                                      width = "30%",
-                                      position = "left",
-                                      open = TRUE,
-                                      
-                                      div(
-                                          "Select trend to view: ",
-                                          tooltip(
-                                              bsicons::bs_icon("info-circle"),
-                                              "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
-                                          ),
-                                          radioButtons("trendParam_sel", label = NULL,
-                                                       choiceNames = c("Median DO Concentration",
-                                                                       "Time DO < 2",
-                                                                       "Time DO < 5"),
-                                                       choiceValues = c("domgl_median",
-                                                                        "LT2",
-                                                                        "LT5"),
-                                                       selected = "domgl_median")
-                                      ),
-                                      
-                                      # choose which values to see
-                                      div(class = "two-col-checks",
-                                          checkboxGroupInput("trendShow_sel", "Select results to include:",
-                                                             choices = c("increasing",
-                                                                         "decreasing",
-                                                                         "no trend",
-                                                                         "not calculated"),
-                                                             selected = c("increasing",
-                                                                          "decreasing",
-                                                                          "no trend",
-                                                                          "not calculated"),
-                                                             inline = TRUE)
-                                      )
-                                      ),
-                    # map
-                    leafletOutput("map_trends")
-                )
-            ), # end card 1
-            
-            
-            # card 2: low do map ----
-            nav_panel(
-                "Low DO year-by-year",
-                full_screen = TRUE,
-                
-                card_header("In the selected year, how much of the time was DO below the selected threshold?",
-                            tooltip(
-                                bsicons::bs_icon("info-circle"),
-                                "Info here about % of readings, and how typical/unusual was determined"
-                            ) # end tooltip
-                ), # end header
-                
-                p("'Typical' and 'Unusual' were defined based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
-                
-                # sidebar layout, for map options
-                layout_sidebar(
-                    sidebar = sidebar(title = "Map Options",
-                                      width = "30%",
-                                      position = "left",
-                                      open = TRUE,
-                                      
-                                      # year selection
-                                      sliderInput(
-                                          "year",
-                                          "Select Year:",
-                                          min = min(tomap$year),
-                                          max = max(tomap$year),
-                                          value = max(tomap$year),
-                                          step = 1,
-                                          sep = ""
-                                      ),
-                                      
-                                      # choose how to color points
-                                      radioButtons("color_sel", "Color points by:",
-                                                   choiceNames = c("typical or unusual",
-                                                                   "% of year with low DO"),
-                                                   choiceValues = c("col_unus",
-                                                                    "col_time.hypoxic"),
-                                                   selected = "col_time.hypoxic"),
-                                      
-                                      # size typical points by amount?
-                                      div(
-                                          style = "display: flex; align-items: top; gap: 5px;",
-                                          checkboxInput("size_sel", "Size points by % time",
-                                                        value = FALSE),
-                                          tooltip(
-                                              bsicons::bs_icon("info-circle", 
-                                                               width = "50", height = "20",
-                                                               # style = " color: blue;",
-                                                               color = "blue"
-                                              ),
-                                              "Points will be sized according to the percentage of time DO was below the selected threshold"
-                                          )
+                # card 1: trend map ----
+                nav_panel(
+                    "Trends",
+                    full_screen = TRUE,
+                    
+                    card_header("Where is DO changing over time?",
+                                tooltip(
+                                    bsicons::bs_icon("info-circle"),
+                                    "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
+                                ), # end tooltip
+                    ), # end header
+                    
+                    
+                    
+                    # sidebar layout
+                    
+                    layout_sidebar(
+                        sidebar = sidebar(title = "Map Options",
+                                          width = "30%",
+                                          position = "left",
+                                          open = TRUE,
                                           
-                                      ),
-                                      
-                                      # choose threshold
-                                      radioButtons("threshold_sel", "DO threshold",
-                                                   choiceNames = c("<2 mg/L", "<5 mg/L"),
-                                                   choiceValues = c("LT2", "LT5"),
-                                                   selected = "LT5"),
-                                      
-                                      # station type
-                                      checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
-                                                         choiceNames = c("typical", "unusual"),
-                                                         choiceValues = c(0, 1),
-                                                         selected = c(0, 1)),
-                                      
-                                      
-                                      sliderInput("cutoff_range", 
-                                                  "Limit to stations in this range of low DO frequency", 
-                                                  min = 0, 
-                                                  max = 100, 
-                                                  value = c(0, 100), 
-                                                  step = 1)
-                                      ), # end sidebar
-                    # map
-                    leafletOutput("map_timeLow")
-                )
-            )  # end card 2
+                                          div(
+                                              "Select trend to view: ",
+                                              tooltip(
+                                                  bsicons::bs_icon("info-circle"),
+                                                  "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
+                                              ),
+                                              radioButtons("trendParam_sel", label = NULL,
+                                                           choiceNames = c("Median DO Concentration",
+                                                                           "Time DO < 2",
+                                                                           "Time DO < 5"),
+                                                           choiceValues = c("domgl_median",
+                                                                            "LT2",
+                                                                            "LT5"),
+                                                           selected = "domgl_median")
+                                          ),
+                                          
+                                          # choose which values to see
+                                          div(class = "two-col-checks",
+                                              checkboxGroupInput("trendShow_sel", "Select results to include:",
+                                                                 choices = c("increasing",
+                                                                             "decreasing",
+                                                                             "no trend",
+                                                                             "not calculated"),
+                                                                 selected = c("increasing",
+                                                                              "decreasing",
+                                                                              "no trend",
+                                                                              "not calculated"),
+                                                                 inline = TRUE)
+                                          )
+                        ),
+                        # map
+                        leafletOutput("map_trends")
+                    )
+                ), # end card 1
+                
+                
+                # card 2: low do map ----
+                nav_panel(
+                    "Low DO by year",
+                    full_screen = TRUE,
+                    
+                    card_header("In the selected year, how much of the time was DO below the selected threshold?",
+                                tooltip(
+                                    bsicons::bs_icon("info-circle"),
+                                    "Info here about % of readings, and how typical/unusual was determined"
+                                ) # end tooltip
+                    ), # end header
+                    
+                    p("'Typical' and 'Unusual' were defined based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
+                    
+                    # sidebar layout, for map options
+                    layout_sidebar(
+                        sidebar = sidebar(title = "Map Options",
+                                          width = "30%",
+                                          position = "left",
+                                          open = TRUE,
+                                          
+                                          # year selection
+                                          sliderInput(
+                                              "year",
+                                              "Select Year:",
+                                              min = min(tomap$year),
+                                              max = max(tomap$year),
+                                              value = max(tomap$year),
+                                              step = 1,
+                                              sep = ""
+                                          ),
+                                          
+                                          # choose how to color points
+                                          radioButtons("color_sel", "Color points by:",
+                                                       choiceNames = c("typical or unusual",
+                                                                       "% of year with low DO"),
+                                                       choiceValues = c("col_unus",
+                                                                        "col_time.hypoxic"),
+                                                       selected = "col_time.hypoxic"),
+                                          
+                                          # size typical points by amount?
+                                          div(
+                                              style = "display: flex; align-items: top; gap: 5px;",
+                                              checkboxInput("size_sel", "Size points by % time",
+                                                            value = FALSE),
+                                              tooltip(
+                                                  bsicons::bs_icon("info-circle", 
+                                                                   width = "50", height = "20",
+                                                                   # style = " color: blue;",
+                                                                   color = "blue"
+                                                  ),
+                                                  "Points will be sized according to the percentage of time DO was below the selected threshold"
+                                              )
+                                              
+                                          ),
+                                          
+                                          # choose threshold
+                                          radioButtons("threshold_sel", "DO threshold",
+                                                       choiceNames = c("<2 mg/L", "<5 mg/L"),
+                                                       choiceValues = c("LT2", "LT5"),
+                                                       selected = "LT5"),
+                                          
+                                          # station type
+                                          checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
+                                                             choiceNames = c("typical", "unusual"),
+                                                             choiceValues = c(0, 1),
+                                                             selected = c(0, 1)),
+                                          
+                                          
+                                          sliderInput("cutoff_range", 
+                                                      "Limit to stations in this range of low DO frequency", 
+                                                      min = 0, 
+                                                      max = 100, 
+                                                      value = c(0, 100), 
+                                                      step = 1)
+                        ), # end sidebar
+                        # map
+                        leafletOutput("map_timeLow")
+                    )
+                )  # end card 2
+                
+                
+            ) # end nav-panel layout
             
-            
-        ) # end nav-panel layout
-        
         ) # end column-wrap layout
         
         
     ) # end layout sidebar
     
-  
+    
 )  # end ui
 
 
@@ -527,7 +522,7 @@ server <- function(input, output, session) {
                 weight = 1,
                 fillColor = ~palette_trnd(map_color),
                 fillOpacity = 0.7,
-                radius = 4
+                radius = 5
             )  |> 
             clearControls() |>
             addLegend(position = "bottomright",
@@ -551,14 +546,14 @@ server <- function(input, output, session) {
         tomap_sub <- tomap |> rowwise() |> 
             mutate(
                 # if user wants to size points by pct, use size 1. if they don't, make it 4.
-                   size1 = case_when(input$size_sel == FALSE ~ 6,
-                                     .default = size)) |> 
+                size1 = case_when(input$size_sel == FALSE ~ 6,
+                                  .default = size)) |> 
             filter(year == input$year, 
                    threshold == input$threshold_sel,
                    pct >= input$cutoff_range[1],
                    pct <= input$cutoff_range[2],
                    unusual %in% input$unus_sel)  
-
+        
         
         # choose symbols based on what user wants to color by:
         tomap_sub <- tomap_sub |> 
@@ -660,7 +655,7 @@ server <- function(input, output, session) {
         # Open the sidebar when a station is clicked
         sidebar_toggle("stn_sidebar", open = TRUE)
         
-        })
+    })
     
     observeEvent(input$map_timeLow_marker_click, {
         click <- input$map_timeLow_marker_click
@@ -669,7 +664,7 @@ server <- function(input, output, session) {
         # Open the sidebar when a station is clicked
         sidebar_toggle("stn_sidebar", open = TRUE)
         
-        })
+    })
     
     # Station table ----
     output$station_info <- renderUI({
@@ -709,15 +704,15 @@ server <- function(input, output, session) {
                 tags$li(strong("Time DO < 5 mg/L: "), 
                         ifelse(is.na(station_data$LT5.trend), "Not calculated", 
                                paste0(round(station_data$LT5.trend, 1), "% per year")))
-            # ),
-            # 
-            # hr(),
-            # 
-            # h5("Typical values:"),
-            # tags$ul(
-            #     tags$li(strong("Median DO: "), paste0(round(station_data$domgl_median_typical, 1), " mg/L")),
-            #     tags$li(strong("Typical % time DO < 2 mg/L: "), paste0(round(station_data$LT2_typical, 1), "%")),
-            #     tags$li(strong("Typical % time DO < 5 mg/L: "), paste0(round(station_data$LT5_typical, 1), "%"))
+                # ),
+                # 
+                # hr(),
+                # 
+                # h5("Typical values:"),
+                # tags$ul(
+                #     tags$li(strong("Median DO: "), paste0(round(station_data$domgl_median_typical, 1), " mg/L")),
+                #     tags$li(strong("Typical % time DO < 2 mg/L: "), paste0(round(station_data$LT2_typical, 1), "%")),
+                #     tags$li(strong("Typical % time DO < 5 mg/L: "), paste0(round(station_data$LT5_typical, 1), "%"))
             )
         )
     })
@@ -749,30 +744,59 @@ server <- function(input, output, session) {
         
     })
     
-    # Plotly section - with accordion
-    output$plotly_section <- renderUI({
+    # station sidebar ui ----
+    # with accordion
+    output$station_section <- renderUI({
         req(selected_station())
         
         accordion(
-            id = "plotly_accordion",
-            open = "Time Series Graphs",
+            id = "station_accordion",
+            open = FALSE,
+            
+            h4(paste0("Selected Station: ", selected_station())),
+            span("Some info here about options",
+                 tooltip(
+                     bsicons::bs_icon("info-circle"),
+                     HTML("<p>Pop graphs out to full screen from the bottom right corner.</p>
+                    <p>Below the graphs is a slider bar to let you change how much of the x-axis is visible.</p>")
+                 )),
             
             # Plotly options sidebar
-            accordion_panel(
-                title = "Graph Options",
-                checkboxGroupInput("thresh_sel", "Select threshold(s) of interest:",
-                                   choices = c("2 mg/L", "5 mg/L"),
-                                   selected = c("2 mg/L", "5 mg/L")),
-                checkboxInput("var_sel", "Add middle 50% of values",
-                              value = FALSE),
-                checkboxInput("minmax_sel", label = "Add min/max",
-                              value = FALSE)
-            ),
             
-            # Plotly graph
+            # Plotly graph, with accordioned options
             accordion_panel(
                 title = "Time Series Graphs",
-                plotlyOutput("stn_timeSeries")
+                
+                card(
+                    full_screen = TRUE,
+                    
+                    # options popover
+                    popover(
+                        actionButton("btn", "Graph options", 
+                                     icon = icon("sliders"),
+                                     width = 200),
+                        div(
+                            checkboxGroupInput("thresh_sel", "Select threshold(s) of interest:",
+                                               choices = c("2 mg/L", "5 mg/L"),
+                                               selected = c("2 mg/L", "5 mg/L")),
+                            checkboxInput("var_sel", "Add middle 50% of values",
+                                          value = FALSE),
+                            checkboxInput("minmax_sel", label = "Add min/max",
+                                          value = FALSE)
+                        ),
+                        title = "Graph Options",
+                        placement = "right"
+                    ),
+                    
+                    # graph
+                    plotlyOutput("stn_timeSeries")
+                )
+            ),
+            
+            # numeric outputs
+            accordion_panel(
+                title = "Numeric Summary",
+                "some text here"
             )
         )
     })
