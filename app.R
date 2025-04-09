@@ -542,16 +542,19 @@ server <- function(input, output, session) {
             # Plotly graph, with accordioned options
             accordion_panel(
                 title = "Time Series Graphs",
+                tags$small("The graph section can be popped out to full screen from the bottom right corner."),
                 
                 card(
                     full_screen = TRUE,
                     height = "50vh",
                     
+                
                     # options popover
                     popover(
                         actionButton("btn", "Graph options", 
                                      icon = icon("sliders"),
-                                     width = 200),
+                                     width = 200,
+                                     class = "small-btn"),
                         div(
                             checkboxGroupInput("thresh_sel", "Select threshold(s) of interest:",
                                                choices = c("2 mg/L", "5 mg/L"),
