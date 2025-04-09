@@ -1,4 +1,29 @@
-# make the stacked DO graphs
+# Custom legend for leaflet with sizes ----
+addLegendCustom <- function(map, sizes, labels, colors = "black", position = "bottomright", opacity = 0.8) {
+    legend_html <- paste0(
+        "<div style='background-color: white; padding: 10px; border-radius: 5px; width: 100px;'>",
+        "<div style='text-align: center; font-weight: bold; margin-bottom: 5px;'>% of year</div>",  # Centered title
+        paste0(
+            "<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;'>",
+            # Wrapper div to center circles
+            "<div style='display: flex; justify-content: center; align-items: center; width: 50px;'>",
+            "<div style='width: ", sizes * 2, "px; height: ", sizes * 2, "px; ",
+            "background-color: ", colors, "; border-radius: 50%; opacity: ", opacity, ";'></div>",
+            "</div>",
+            # Right-aligned text
+            "<div style='flex-grow: 1; text-align: right; padding-left: 10px;'>", labels, "</div>",
+            "</div>"
+            , collapse = ""),
+        "</div>"
+    )
+    
+    return(addControl(map, html = HTML(legend_html), position = position))
+}
+
+
+
+
+# Stacked DO graphs ----
 
 # Utility function to convert hex to rgba with alpha
 hex_to_rgba <- function(hex, alpha = 1) {

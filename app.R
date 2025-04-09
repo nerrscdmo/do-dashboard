@@ -138,30 +138,6 @@ tomap <- left_join(tomap, symbols_time.grid,
                    by = c("unusual",
                           "pct_rounded" = "pcts"))
 
-# legend setup ----
-# custom function for sizing
-addLegendCustom <- function(map, sizes, labels, colors = "black", position = "bottomright", opacity = 0.8) {
-    legend_html <- paste0(
-        "<div style='background-color: white; padding: 10px; border-radius: 5px; width: 100px;'>",
-        "<div style='text-align: center; font-weight: bold; margin-bottom: 5px;'>% of year</div>",  # Centered title
-        paste0(
-            "<div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;'>",
-            # Wrapper div to center circles
-            "<div style='display: flex; justify-content: center; align-items: center; width: 50px;'>",
-            "<div style='width: ", sizes * 2, "px; height: ", sizes * 2, "px; ",
-            "background-color: ", colors, "; border-radius: 50%; opacity: ", opacity, ";'></div>",
-            "</div>",
-            # Right-aligned text
-            "<div style='flex-grow: 1; text-align: right; padding-left: 10px;'>", labels, "</div>",
-            "</div>"
-            , collapse = ""),
-        "</div>"
-    )
-    
-    return(addControl(map, html = HTML(legend_html), position = position))
-}
-
-
 
 # UI ----
 ui <- page_fluid(
@@ -174,69 +150,11 @@ ui <- page_fluid(
         p("Here is where we might say something about how time spent below thresholds seems to be patchy, and is different every year. The default for the map is to show how much of the most recent year was spent with DO < 5 mg/L. Maybe make an info box for why this is important? Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
         
     ),
-    # 
-    # css/html styling ---- 
-    tags$head(
-        tags$style(HTML("
-        /* Main input labels - 14px */
-        .shiny-input-container > label,  /* Main labels */
-        .form-label { 
-            font-size: 14px important;
-        }
-        
-        p {
-        font-size: 14px !important;
-        }
-        
-        .accordion-button {
-        font-size: 14px !important;
-        color: blue;
-        }
-        
-        /* Option text - 12px */
-        .form-check-label,
-        div.shiny-options-group label,  /* Radio and checkbox group options */
-        .radio label,
-        .checkbox label {
-            font-size: 14px !important;
-        }
-        
-         /* Style for two-column checkbox group */
-        .two-col-checks .form-check {
-            display: inline-block;
-            width: 50%;
-        }
-        
-        /* Slider text */
-        .irs-grid-text, .irs-min, .irs-max, .irs-single, .irs-from, .irs-to {
-            font-size: 12px !important;
-        }
-        
-        
-    /* Slider bar styles */
-    .irs-bar {
-      height: 0px !important;
-      border: 0px solid #444444 !important;
-      background: #444444 !important;
-    }
-    .irs-bar-edge {
-      display: none !important;
-    }
-    .irs-line {
-      height: 2px !important;
-      border: 0px solid transparent !important;
-      background: #444444 !important;
-    }
-    .irs-slider {
-      border: 1px solid #aaa !important;
-      background: #fff !important;
-      width: 14px !important;
-      height: 14px !important;
-      border-radius: 50%;
-    }
     
-  "))
-    ),  # end styling
+    # css/html styling ----
+    tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+    ),
     
     
     layout_sidebar(
