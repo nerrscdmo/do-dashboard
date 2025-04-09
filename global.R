@@ -40,6 +40,47 @@ mgl_timeSeries <- stn_mmyr |>
            domgl_min, domgl_max) |> 
     mutate(date = lubridate::ymd(paste(year, month, "01")))
 
+# table of summary stats by station
+stn_trends2 <- stn_trends_long |> 
+    mutate(units = case_when(param == "domgl_median" ~ "mg/L per year",
+                             param == "LT2" ~ "% per year",
+                             param == "LT5" ~ "% per year"),
+           desc = case_when(significant == "yes" ~ stringr::str_to_sentence(direction),
+                            .default = "No trend"),
+           significant = case_when(significant == "no" ~ "not significant",
+                                   .default = "statistically significant"),
+           trend = round(trend, 3),
+           pval = round(pval, 3),
+           trend_description = glue::glue("{desc}. Estimate: {trend} {units}; p = {pval}."),
+           trend_description = case_when(direction == "not calculated" ~ "Not calculated.",
+                                         .default = trend_description),
+           param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
+                             param == "LT2" ~ "% of year under 2 mg/L",
+                             param == "LT5" ~ "% of year under 5 mg/L")) |> 
+    select(station, nYears, param, Trend = trend_description) 
+
+stnMedians <- stnDist |> 
+    select(station,
+           domgl_median = median.mgl_median,
+           LT2 = LT2pct_median,
+           LT5 = LT5pct_median) |> 
+    mutate(domgl_median = round(domgl_median, 1),
+           LT2 = round(LT2, 2),
+           LT5 = round(LT5, 2)) |> 
+    pivot_longer(-station,
+                 names_to = "param",
+                 values_to = "Median") |> 
+    mutate(param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
+                             param == "LT2" ~ "% of year under 2 mg/L",
+                             param == "LT5" ~ "% of year under 5 mg/L"))
+
+stn_summaries <- full_join(stnMedians, stn_trends2, by = c("station", "param")) |> 
+    relocate(nYears, .after = station) |> 
+    rename("Time Series Length (years)" = nYears,
+           "Long Term Median" = Median,
+           Variable = param)
+
+
 
 # color palettes and shapes ----
 # palette <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))

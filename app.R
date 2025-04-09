@@ -6,6 +6,7 @@ library(plotly)
 library(leaflet)
 library(leaflegend)
 library(htmltools)
+library(reactable)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -45,6 +46,7 @@ ui <- page_fluid(
         sidebar = sidebar(id = "stn_sidebar",
                           position = "right",
                           width = "50%",
+                          height = "90vh",
                           open = FALSE,
                           # title = "Station Information",
                           uiOutput("station_section")
@@ -112,11 +114,14 @@ ui <- page_fluid(
                                                                 "not calculated"),
                                                    inline = TRUE)
                             )
-                        ),
+                        ), # end sidebar
+                        
                         # map
                         leafletOutput("map_trends")
-                    )
-                ), # end card 1
+                    
+                        ) # end tab's layout_sidebar
+                
+                    ), # end card 1
                 
                 
                 # card 2: low do map ----
@@ -196,19 +201,19 @@ ui <- page_fluid(
                                         value = c(0, 100), 
                                         step = 1)
                         ), # end sidebar
+                        
                         # map
                         leafletOutput("map_timeLow")
-                    )
+                    
+                    ) # end tab's layout_sidebar
+                    
                 )  # end card 2
-                
                 
             ) # end nav-panel layout
             
         ) # end column-wrap layout
         
-        
-    ) # end layout sidebar
-    
+    ) # end overall layout_sidebar
     
 )  # end ui
 
@@ -469,56 +474,6 @@ server <- function(input, output, session) {
         
     })
     
-    # Station table ----
-    output$station_info <- renderUI({
-        stn <- selected_station()
-        
-        if(is.null(stn)) {
-            return(tagList(
-                "Click on a station from either map to see detailed information here."
-            ))
-        }
-        
-        # Filter stn_trends for the selected station
-        station_data <- stn_trends %>% 
-            filter(station == stn)
-        
-        if(nrow(station_data) == 0) {
-            return(tagList(
-                h4("Station: ", stn),
-                "No detailed information available for this station."
-            ))
-        }
-        
-        # Create info display
-        tagList(
-            h4("Station: ", station_data$station[1]),
-            
-            hr(),
-            
-            h5("Trends:"),
-            tags$ul(
-                tags$li(strong("DO Concentration: "), 
-                        ifelse(is.na(station_data$domgl_median.trend), "Not calculated", 
-                               paste0(round(station_data$domgl_median.trend, 2), " mg/L per year"))),
-                tags$li(strong("Time DO < 2 mg/L: "), 
-                        ifelse(is.na(station_data$LT2.trend), "Not calculated", 
-                               paste0(round(station_data$LT2.trend, 1), "% per year"))),
-                tags$li(strong("Time DO < 5 mg/L: "), 
-                        ifelse(is.na(station_data$LT5.trend), "Not calculated", 
-                               paste0(round(station_data$LT5.trend, 1), "% per year")))
-                # ),
-                # 
-                # hr(),
-                # 
-                # h5("Typical values:"),
-                # tags$ul(
-                #     tags$li(strong("Median DO: "), paste0(round(station_data$domgl_median_typical, 1), " mg/L")),
-                #     tags$li(strong("Typical % time DO < 2 mg/L: "), paste0(round(station_data$LT2_typical, 1), "%")),
-                #     tags$li(strong("Typical % time DO < 5 mg/L: "), paste0(round(station_data$LT5_typical, 1), "%"))
-            )
-        )
-    })
     
     # Plotly graphs----
     output$stn_timeSeries <- renderPlotly({
@@ -547,6 +502,24 @@ server <- function(input, output, session) {
         
     })
     
+    # station table ----
+    output$stn_tbl <- renderReactable({
+        req(selected_station())
+        
+        tbl <- stn_summaries |> 
+            filter(station == selected_station()) |> 
+            select(-station) |> 
+            mutate(`Time Series Length (years)` = ifelse(row_number() == 1,
+                                                         `Time Series Length (years)`, ""))
+        
+        reactable(tbl,
+                  sortable = FALSE,
+                  columns = list(
+                      `Time Series Length (years)` = colDef(align = "center"),
+                      `Long Term Median` = colDef(align = "center")
+                  ))
+    })
+    
     # station sidebar ui ----
     # with accordion
     output$station_section <- renderUI({
@@ -572,6 +545,7 @@ server <- function(input, output, session) {
                 
                 card(
                     full_screen = TRUE,
+                    height = "50vh",
                     
                     # options popover
                     popover(
@@ -599,7 +573,7 @@ server <- function(input, output, session) {
             # numeric outputs
             accordion_panel(
                 title = "Numeric Summary",
-                "some text here"
+                reactableOutput("stn_tbl")
             )
         )
     })
