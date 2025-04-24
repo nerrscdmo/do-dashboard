@@ -24,24 +24,13 @@ ui <- page_fluid(
     ),
     
     # header
-    h1("Can our estuaries breathe?"),
-    h5("Dissolved Oxygen dashboard . . .",
-       popover(actionButton("btn_header", "Click for Information",
-                            class = "btn-sm"),
-               "Information about the dashboard. Maybe a modal would be better.",
-               title = "Dashboard Information")
-    ),
-    
-    # layout_columns(
-    #     col_widths = c(4, 8),
-    #     h1("Can our estuaries breathe?"),
-    #     # checkboxInput("sync_maps", "Zoom and Pan Maps Together", value = TRUE),
-    #     p("Here is where we might say something about how time spent below thresholds seems to be patchy, and is different every year. The default for the map is to show how much of the most recent year was spent with DO < 5 mg/L. Maybe make an info box for why this is important? Code is available on ", a('GitHub', href='https://github.com/swmpkim/estuary-dashboard', target = '_blank'), ".")
-    # 
-    # ),
-    # 
-    
-    layout_sidebar(
+    h5("NERRS Monitoring: Dissolved Oxygen"),
+    p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar."),
+
+    # main body
+    navset_card_tab(
+        full_screen = TRUE,
+
         # sidebar: stn info ----
         sidebar = sidebar(id = "stn_sidebar",
                           position = "right",
@@ -53,16 +42,9 @@ ui <- page_fluid(
         ),
         
         
-        # column wrap for navsets so they can be fillable 
-        layout_column_wrap(
-            width = "100%",
-            height = "calc(90vh - 80px)", 
-            
+
             # map tabs ----
-            navset_card_tab(
-                full_screen = TRUE,
-                
-                # card 1: trend map ----
+                # panel 1: trend map ----
                 nav_panel(
                     "Trends",
                     full_screen = TRUE,
@@ -121,10 +103,10 @@ ui <- page_fluid(
                     
                         ) # end tab's layout_sidebar
                 
-                    ), # end card 1
+                    ), # end nav panel 1
                 
                 
-                # card 2: low do map ----
+                # panel 2: low do map ----
                 nav_panel(
                     "Low DO by year",
                     full_screen = TRUE,
@@ -207,14 +189,10 @@ ui <- page_fluid(
                     
                     ) # end tab's layout_sidebar
                     
-                )  # end card 2
+                )  # end nav-panel 2
                 
             ) # end nav-panel layout
-            
-        ) # end column-wrap layout
-        
-    ) # end overall layout_sidebar
-    
+
 )  # end ui
 
 
