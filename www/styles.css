@@ -1,3 +1,14 @@
+/* Header spacing */
+h5 {
+  margin-bottom: 4px !important; 
+}
+
+/* Gaps */
+.bslib-page-fill {
+  gap: 0.25rem !important;        /* Reduce overall spacing */
+  row-gap: 0.25rem !important;    /* Specifically reduce vertical spacing */
+}
+
 /* Main input labels - 14px */
 .shiny-input-container > label,  /* Main labels */
 .form-label { 
@@ -6,6 +17,8 @@
 
 p {
     font-size: 14px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
 }
 
 .accordion-button {

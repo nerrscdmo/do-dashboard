@@ -16,7 +16,7 @@ source(here::here("R", "functions.R"))
 source("global.R")
 
 # UI ----
-ui <- page_fluid(
+ui <- page_fillable(
     
     # css/html styling ----
     tags$head(
@@ -189,7 +189,7 @@ ui <- page_fluid(
                     
                     ) # end tab's layout_sidebar
                     
-                )  # end nav-panel 2
+                ),  # end nav-panel 2
                 
             ) # end nav-panel layout
 
