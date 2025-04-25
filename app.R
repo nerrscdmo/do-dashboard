@@ -24,7 +24,7 @@ ui <- page_fillable(
     ),
     
     # header
-    h5("NERRS Monitoring: Dissolved Oxygen"),
+    h4("NERRS Monitoring: Dissolved Oxygen"),
     p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar."),
 
     # main body
@@ -128,6 +128,13 @@ ui <- page_fillable(
                             position = "left",
                             open = TRUE,
                             
+                            
+                            # choose threshold
+                            radioButtons("threshold_sel", "Define 'low' DO as:",
+                                         choiceNames = c("<2 mg/L", "<5 mg/L"),
+                                         choiceValues = c("LT2", "LT5"),
+                                         selected = "LT5"),
+                            
                             # year selection
                             sliderInput(
                                 "year",
@@ -139,15 +146,7 @@ ui <- page_fillable(
                                 sep = ""
                             ),
                             
-                            # choose how to color points
-                            radioButtons("color_sel", "Color points by:",
-                                         choiceNames = c("typical or unusual",
-                                                         "% of year with low DO"),
-                                         choiceValues = c("col_unus",
-                                                          "col_time.hypoxic"),
-                                         selected = "col_time.hypoxic"),
-                            
-                            # size typical points by amount?
+                            # size points by % of time where DO was low?
                             div(
                                 style = "display: flex; align-items: top; gap: 5px;",
                                 checkboxInput("size_sel", "Size points by % time",
@@ -163,25 +162,29 @@ ui <- page_fillable(
                                 
                             ),
                             
-                            # choose threshold
-                            radioButtons("threshold_sel", "DO threshold",
-                                         choiceNames = c("<2 mg/L", "<5 mg/L"),
-                                         choiceValues = c("LT2", "LT5"),
-                                         selected = "LT5"),
-                            
                             # station type
                             checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
                                                choiceNames = c("typical", "unusual"),
                                                choiceValues = c(0, 1),
                                                selected = c(0, 1)),
-                            
-                            
+         
+
                             sliderInput("cutoff_range", 
                                         "Limit to stations in this range of low DO frequency", 
                                         min = 0, 
                                         max = 100, 
                                         value = c(0, 100), 
-                                        step = 1)
+                                        step = 1),
+                            
+                            
+                            
+                            # choose how to color points
+                            radioButtons("color_sel", "Color points by:",
+                                         choiceNames = c("typical or unusual",
+                                                         "% of year with low DO"),
+                                         choiceValues = c("col_unus",
+                                                          "col_time.hypoxic"),
+                                         selected = "col_time.hypoxic")
                         ), # end sidebar
                         
                         # map
@@ -515,7 +518,12 @@ server <- function(input, output, session) {
                     <p>Below the graphs is a slider bar to let you change how much of the x-axis is visible.</p>")
                  )),
             
-            # Plotly options sidebar
+            
+            # numeric outputs
+            accordion_panel(
+                title = "Numeric Summary",
+                reactableOutput("stn_tbl")
+            ),
             
             # Plotly graph, with accordioned options
             accordion_panel(
@@ -526,7 +534,7 @@ server <- function(input, output, session) {
                     full_screen = TRUE,
                     height = "50vh",
                     
-                
+                    
                     # options popover
                     popover(
                         actionButton("btn", "Graph options", 
@@ -551,10 +559,9 @@ server <- function(input, output, session) {
                 )
             ),
             
-            # numeric outputs
             accordion_panel(
-                title = "Numeric Summary",
-                reactableOutput("stn_tbl")
+                title = "Selected Year",
+                "some content"
             )
         )
     })
