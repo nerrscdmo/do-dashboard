@@ -136,19 +136,22 @@ ui <- page_fillable(
                                          selected = "LT5"),
                             
                             # year selection
-                            sliderInput(
-                                "year",
-                                "Select Year:",
-                                min = min(tomap$year),
-                                max = max(tomap$year),
-                                value = max(tomap$year),
-                                step = 1,
-                                sep = ""
+                            div(
+                                class = "highlight-slider",
+                                sliderInput(
+                                    "year",
+                                    "Select Year:",
+                                    min = min(tomap$year),
+                                    max = max(tomap$year),
+                                    value = max(tomap$year),
+                                    step = 1,
+                                    sep = ""
+                                )
                             ),
                             
                             # size points by % of time where DO was low?
                             div(
-                                style = "display: flex; align-items: top; gap: 5px;",
+                                style = "display: flex; align-items: top;",
                                 checkboxInput("size_sel", "Size points by % time",
                                               value = FALSE),
                                 tooltip(

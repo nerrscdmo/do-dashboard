@@ -9,6 +9,23 @@ h5 {
   row-gap: 0.25rem !important;    /* Specifically reduce vertical spacing */
 }
 
+/* Other gaps */
+.bslib-gap-spacing {
+    gap: 0.5rem !important;
+    row-gap: 0.25rem !important;
+}
+
+.sidebar .bslib-gap-spacing {
+    gap: 0.75rem !important;
+}
+
+
+/* Add extra space around the "Select Year" slider */
+.highlight-slider {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
 /* Main input labels - 14px */
 .shiny-input-container > label,  /* Main labels */
 .form-label { 
