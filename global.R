@@ -36,8 +36,7 @@ hypoxia_annual <- tomap |>
 
 mgl_timeSeries <- stn_mmyr |> 
     select(station, year, month,
-           domgl_median, domgl_p25, domgl_p75,
-           domgl_min, domgl_max) |> 
+           domgl_median) |> 
     mutate(date = lubridate::ymd(paste(year, month, "01")))
 
 # table of summary stats by station
@@ -59,11 +58,15 @@ stn_trends2 <- stn_trends_long |>
                              param == "LT5" ~ "% of year under 5 mg/L")) |> 
     select(station, nYears, param, Trend = trend_description) 
 
-stnMedians <- stnDist |> 
+stnMedians <- stn_yr |> 
     select(station,
-           domgl_median = median.mgl_median,
-           LT2 = LT2pct_median,
-           LT5 = LT5pct_median) |> 
+           domgl_median = annual_median.mgl,
+           LT2 = annual_LT2_percent,
+           LT5 = annual_LT5_percent) |> 
+    summarize(.by = station,
+              domgl_median = median(domgl_median, na.rm = TRUE),
+              LT2 = median(LT2, na.rm = TRUE),
+              LT5 = median(LT5, na.rm = TRUE)) |> 
     mutate(domgl_median = round(domgl_median, 1),
            LT2 = round(LT2, 2),
            LT5 = round(LT5, 2)) |> 

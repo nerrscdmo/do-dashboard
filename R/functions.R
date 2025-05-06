@@ -382,3 +382,46 @@ monthly_stn_do <- function(data,
 }
 
 
+# DO each year as gray lines plus highlighted year ----
+plot_yrdist <- function(data, param, 
+                        highlight_year, highlight_color){
+    # data should be a data frame that is the station's data only
+    # pass everything unquoted
+    
+    param_str <- rlang::as_name(rlang::enquo(param))
+    
+    p <- ggplot(data,
+                aes(x = {{param}},
+                    y = 1)) +
+        # light gray lines for all years
+        geom_point(
+            shape = 124,
+            col = "gray60",
+            size = 5
+        ) +
+        geom_hline(yintercept = 1,
+                   col = "gray80") +
+        # line for year to highlight
+        geom_point(data = data |> filter(year == highlight_year),
+                   shape = 124,
+                   col = highlight_color,
+                   size = 9) +
+        theme(axis.text.y = element_blank(),
+              axis.title = element_blank(),
+              axis.ticks = element_blank(),
+              plot.background = element_blank(),
+              panel.background = element_blank())
+    
+    if(param_str %in% c("LT2", "LT5")){
+        p <- p +
+            coord_cartesian(xlim = c(0, 100)) +
+            scale_x_continuous(labels = scales::label_percent(scale = 1))
+    }
+    
+    if(param_str == "medianDO"){
+        p <- p +
+            coord_cartesian(xlim = c(0, 13.5))
+    }
+    
+    p
+}
