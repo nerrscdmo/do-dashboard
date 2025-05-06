@@ -10,6 +10,8 @@ library(reactable)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(patchwork)
+library(ggrepel)
 
 # setup ----
 source(here::here("R", "functions.R"))
@@ -486,6 +488,39 @@ server <- function(input, output, session) {
         
     })
     
+    # selected year distn graphs ----
+    output$lowDOdist <- renderPlot({
+        
+        # identify the station
+        stn <- selected_station()
+        yr <- input$year
+        
+        col_lowDO <- "#A50026"
+        
+        # subset the data frames
+        # stn_timeSeries <- mgl_timeSeries |> 
+        #     filter(station == stn)
+        stn_hypox_annual <- hypoxia_annual |> 
+            filter(station == stn)
+        
+        p1 <- plot_yrdist(stn_hypox_annual, LT2,
+                          yr, col_lowDO) +
+            labs(subtitle = "< 2 mg/L")
+        
+        p2 <- plot_yrdist(stn_hypox_annual, LT5,
+                          yr, col_lowDO) +
+            labs(subtitle = "< 5 mg/L")
+        
+        # combine low DO plots
+        p3 <- p1 / p2 +
+            plot_layout(axes = "collect") +
+            plot_annotation(
+                title = "% of year with low DO, compared to other years at this station"
+            )
+        
+        p3
+    })
+    
     # station table ----
     output$stn_tbl <- renderReactable({
         req(selected_station())
@@ -564,7 +599,7 @@ server <- function(input, output, session) {
             
             accordion_panel(
                 title = "Selected Year",
-                "some content"
+                plotOutput("lowDOdist", height = "300px", width = "100%")
             )
         )
     })
