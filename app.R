@@ -490,6 +490,7 @@ server <- function(input, output, session) {
     
     # selected year distn graphs ----
     output$lowDOdist <- renderPlot({
+        req(selected_station(), input$year)
         
         # identify the station
         stn <- selected_station()
@@ -497,9 +498,7 @@ server <- function(input, output, session) {
         
         col_lowDO <- "#A50026"
         
-        # subset the data frames
-        # stn_timeSeries <- mgl_timeSeries |> 
-        #     filter(station == stn)
+        # subset the data frame
         stn_hypox_annual <- hypoxia_annual |> 
             filter(station == stn)
         

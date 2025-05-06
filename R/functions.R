@@ -422,7 +422,7 @@ plot_yrdist <- function(data, param,
         if(label_highlight){
             p <- p +
                 ggrepel::geom_text_repel(data = data |> filter(year == highlight_year),
-                                         aes(label = yr),
+                                         aes(label = highlight_year),
                                          col = highlight_color,
                                          ylim = c(1.01, 1.05),
                                          nudge_x = 3,
@@ -437,7 +437,7 @@ plot_yrdist <- function(data, param,
         if(label_highlight){
             p <- p +
                 ggrepel::geom_text_repel(data = data |> filter(year == highlight_year),
-                                         aes(label = yr),
+                                         aes(label = as.character(highlight_year)),
                                          col = highlight_color,
                                          ylim = c(1.01, 1.05),
                                          nudge_x = 0.5,
