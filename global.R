@@ -11,77 +11,77 @@ library(ggplot2)
 load(here::here("data_wq", "do_dataframes.RData"))
 
 
-stn_trends_long <- stn_trends |> 
-    pivot_longer(-c(station, nYears),
-                 names_to = c("param", ".value"),
-                 names_sep = "\\.") |> 
-    mutate(significant = case_when(pval <= 0.05 ~ "yes",
-                                   is.na(pval) ~ "no",  # these are proportions when all values were 0
-                                   pval > 0.05 ~ "no"),
-           direction = case_when(trend < 0 ~ "decreasing",
-                                 trend > 0 ~ "increasing",
-                                 trend == 0 ~ "none",
-                                 is.na(trend) ~ "not calculated"),
-           map_color = case_when(is.na(trend) ~ "not calculated",
-                                 significant == "no" ~ "no trend",
-                                 direction == "increasing" ~ "increasing",
-                                 direction == "decreasing" ~ "decreasing")) |> 
-    left_join(distinct(select(tomap, station, lat, long)),
-              by = "station")
-
-hypoxia_annual <- tomap |> 
-    select(station, year, threshold, pct) |> 
-    pivot_wider(names_from = threshold,
-                values_from = pct)
-
-mgl_timeSeries <- stn_mmyr |> 
-    select(station, year, month,
-           domgl_median) |> 
-    mutate(date = lubridate::ymd(paste(year, month, "01")))
-
-# table of summary stats by station
-stn_trends2 <- stn_trends_long |> 
-    mutate(units = case_when(param == "domgl_median" ~ "mg/L per year",
-                             param == "LT2" ~ "% per year",
-                             param == "LT5" ~ "% per year"),
-           desc = case_when(significant == "yes" ~ stringr::str_to_sentence(direction),
-                            .default = "No trend"),
-           significant = case_when(significant == "no" ~ "not significant",
-                                   .default = "statistically significant"),
-           trend = round(trend, 3),
-           pval = round(pval, 3),
-           trend_description = glue::glue("{desc}. Estimate: {trend} {units}; p = {pval}."),
-           trend_description = case_when(direction == "not calculated" ~ "Not calculated.",
-                                         .default = trend_description),
-           param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
-                             param == "LT2" ~ "% of year under 2 mg/L",
-                             param == "LT5" ~ "% of year under 5 mg/L")) |> 
-    select(station, nYears, param, Trend = trend_description) 
-
-stnMedians <- stn_yr |> 
-    select(station,
-           domgl_median = annual_median.mgl,
-           LT2 = annual_LT2_percent,
-           LT5 = annual_LT5_percent) |> 
-    summarize(.by = station,
-              domgl_median = median(domgl_median, na.rm = TRUE),
-              LT2 = median(LT2, na.rm = TRUE),
-              LT5 = median(LT5, na.rm = TRUE)) |> 
-    mutate(domgl_median = round(domgl_median, 1),
-           LT2 = round(LT2, 2),
-           LT5 = round(LT5, 2)) |> 
-    pivot_longer(-station,
-                 names_to = "param",
-                 values_to = "Median") |> 
-    mutate(param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
-                             param == "LT2" ~ "% of year under 2 mg/L",
-                             param == "LT5" ~ "% of year under 5 mg/L"))
-
-stn_summaries <- full_join(stnMedians, stn_trends2, by = c("station", "param")) |> 
-    relocate(nYears, .after = station) |> 
-    rename("Time Series Length (years)" = nYears,
-           "Long Term Median" = Median,
-           Variable = param)
+# stn_trends_long <- stn_trends |> 
+#     pivot_longer(-c(station, nYears),
+#                  names_to = c("param", ".value"),
+#                  names_sep = "\\.") |> 
+#     mutate(significant = case_when(pval <= 0.05 ~ "yes",
+#                                    is.na(pval) ~ "no",  # these are proportions when all values were 0
+#                                    pval > 0.05 ~ "no"),
+#            direction = case_when(trend < 0 ~ "decreasing",
+#                                  trend > 0 ~ "increasing",
+#                                  trend == 0 ~ "none",
+#                                  is.na(trend) ~ "not calculated"),
+#            map_color = case_when(is.na(trend) ~ "not calculated",
+#                                  significant == "no" ~ "no trend",
+#                                  direction == "increasing" ~ "increasing",
+#                                  direction == "decreasing" ~ "decreasing")) |> 
+#     left_join(distinct(select(tomap, station, lat, long)),
+#               by = "station")
+# 
+# hypoxia_annual <- tomap |> 
+#     select(station, year, threshold, pct) |> 
+#     pivot_wider(names_from = threshold,
+#                 values_from = pct)
+# 
+# mgl_timeSeries <- stn_mmyr |> 
+#     select(station, year, month,
+#            domgl_median) |> 
+#     mutate(date = lubridate::ymd(paste(year, month, "01")))
+# 
+# # table of summary stats by station
+# stn_trends2 <- stn_trends_long |> 
+#     mutate(units = case_when(param == "domgl_median" ~ "mg/L per year",
+#                              param == "LT2" ~ "% per year",
+#                              param == "LT5" ~ "% per year"),
+#            desc = case_when(significant == "yes" ~ stringr::str_to_sentence(direction),
+#                             .default = "No trend"),
+#            significant = case_when(significant == "no" ~ "not significant",
+#                                    .default = "statistically significant"),
+#            trend = round(trend, 3),
+#            pval = round(pval, 3),
+#            trend_description = glue::glue("{desc}. Estimate: {trend} {units}; p = {pval}."),
+#            trend_description = case_when(direction == "not calculated" ~ "Not calculated.",
+#                                          .default = trend_description),
+#            param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
+#                              param == "LT2" ~ "% of year under 2 mg/L",
+#                              param == "LT5" ~ "% of year under 5 mg/L")) |> 
+#     select(station, nYears, param, Trend = trend_description) 
+# 
+# stnMedians <- stn_yr |> 
+#     select(station,
+#            domgl_median = annual_median.mgl,
+#            LT2 = annual_LT2_percent,
+#            LT5 = annual_LT5_percent) |> 
+#     summarize(.by = station,
+#               domgl_median = median(domgl_median, na.rm = TRUE),
+#               LT2 = median(LT2, na.rm = TRUE),
+#               LT5 = median(LT5, na.rm = TRUE)) |> 
+#     mutate(domgl_median = round(domgl_median, 1),
+#            LT2 = round(LT2, 2),
+#            LT5 = round(LT5, 2)) |> 
+#     pivot_longer(-station,
+#                  names_to = "param",
+#                  values_to = "Median") |> 
+#     mutate(param = case_when(param == "domgl_median" ~ "DO (mg/L) median",
+#                              param == "LT2" ~ "% of year under 2 mg/L",
+#                              param == "LT5" ~ "% of year under 5 mg/L"))
+# 
+# stn_summaries <- full_join(stnMedians, stn_trends2, by = c("station", "param")) |> 
+#     relocate(nYears, .after = station) |> 
+#     rename("Time Series Length (years)" = nYears,
+#            "Long Term Median" = Median,
+#            Variable = param)
 
 
 
@@ -176,3 +176,5 @@ symbols_time.grid$symbol_time <- unlist(symbols_time.hypoxic)
 tomap <- left_join(tomap, symbols_time.grid,
                    by = c("unusual",
                           "pct_rounded" = "pcts"))
+
+# rm(stn_mmyr, stn_yr, stn_trends, stn_trends2)
