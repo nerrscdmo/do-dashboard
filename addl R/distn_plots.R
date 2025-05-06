@@ -11,6 +11,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(patchwork)
+library(ggrepel)
 
 # setup ----
 source(here::here("R", "functions.R"))
@@ -30,9 +31,10 @@ stn = "tjroswq"
 stn = "jacnewq"
 yr = 2015
 
-stn_mglByYear <- stn_mmyr |> 
-    summarize(.by = c(station, year),
-              medianDO = median(domgl_median, na.rm = TRUE))
+stn_mglByYear <- tomap |>
+    select(station, year, medianDO = median.mgl) |> 
+    filter(station == stn) |> 
+    distinct()
 
 stn_df <- hypoxia_annual |> 
     filter(station == stn) |> 
@@ -52,16 +54,29 @@ p2 <- plot_yrdist(stn_df, LT5,
 p3 <- p1 / p2 +
     plot_layout(axes = "collect")
 
+# with title
+p3 +
+    plot_annotation(
+        title = "Compared to other years at this station"
+    )
+
 
 # median mg/L
 p4 <- plot_yrdist(stn_df, medianDO,
                   yr, col_medDO) +
     labs(subtitle = "Median DO concentration (mg/L)")
-
+p4
 
 # combine all
 p3 / plot_spacer() / p4 + 
     plot_layout(heights = c(1, 1, 0.5, 1))
+
+# with big title
+p3 / plot_spacer() / p4 + 
+    plot_layout(heights = c(1, 1, 0.5, 1)) +
+    plot_annotation(
+        title = "Compared to other years at this station"
+    )
 
 
 # another option
@@ -82,7 +97,12 @@ p5 <- ggplot(stn_df, aes(y = medianDO, x = 1)) +
         col = col_medDO,
         size = 1
     ) +
-    
+    ggrepel::geom_text_repel(data = stn_df |> filter(year == yr),
+                             aes(label = yr),
+                             col = col_medDO,
+                             xlim = c(1.05, 1.1),
+                             nudge_y = 0.5,
+                             segment.colour = NA) +
     theme(axis.text.x = element_blank(),
           axis.title = element_blank(),
           axis.ticks = element_blank(),
@@ -93,8 +113,34 @@ p5 <- ggplot(stn_df, aes(y = medianDO, x = 1)) +
 
 p5
 
-p5 + p3
+p5 + p3 +
+    plot_annotation(
+        title = "Compared to other years at this station"
+    )
 
 
     
-    
+p1b <- p1 +
+    geom_text_repel(data = stn_df |> filter(year == yr),
+              aes(x = LT2,
+                  y = 1,
+                  label = yr),
+              col = col_lowDO,
+              ylim = c(1.01, 1.05),
+              nudge_x = 3,
+              segment.colour = NA)
+
+
+p2b <- p2 +
+    geom_text_repel(data = stn_df |> filter(year == yr),
+              aes(x = LT5,
+                  y = 1,
+                  label = yr),
+              col = col_lowDO,
+              ylim = c(1.01, 1.05),
+              nudge_x = 3,
+              segment.colour = NA)
+
+p1b / p2b +
+    plot_layout(axes = "collect")
+

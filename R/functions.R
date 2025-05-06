@@ -191,7 +191,7 @@ graph_do <- function(data_monthly, data_yearly,
 }
 
 
-# selected year's DO at station ----
+# selected year's DO by month at station ----
 monthly_stn_do <- function(data, 
                      station, 
                      thresh2, thresh5,
@@ -384,7 +384,8 @@ monthly_stn_do <- function(data,
 
 # DO each year as gray lines plus highlighted year ----
 plot_yrdist <- function(data, param, 
-                        highlight_year, highlight_color){
+                        highlight_year, highlight_color,
+                        label_highlight = TRUE){
     # data should be a data frame that is the station's data only
     # pass everything unquoted
     
@@ -416,12 +417,35 @@ plot_yrdist <- function(data, param,
         p <- p +
             coord_cartesian(xlim = c(0, 100)) +
             scale_x_continuous(labels = scales::label_percent(scale = 1))
+        
+        # add label (in here because nudge_x needs to be different for these vs. median DO)
+        if(label_highlight){
+            p <- p +
+                ggrepel::geom_text_repel(data = data |> filter(year == highlight_year),
+                                         aes(label = yr),
+                                         col = highlight_color,
+                                         ylim = c(1.01, 1.05),
+                                         nudge_x = 3,
+                                         segment.colour = NA)
+        }
     }
     
     if(param_str == "medianDO"){
         p <- p +
             coord_cartesian(xlim = c(0, 13.5))
+        
+        if(label_highlight){
+            p <- p +
+                ggrepel::geom_text_repel(data = data |> filter(year == highlight_year),
+                                         aes(label = yr),
+                                         col = highlight_color,
+                                         ylim = c(1.01, 1.05),
+                                         nudge_x = 0.5,
+                                         segment.colour = NA)
+        }
     }
+    
+
     
     p
 }
