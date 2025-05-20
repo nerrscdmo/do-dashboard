@@ -28,11 +28,11 @@ ui <- page_fillable(
     # header
     h4("NERRS Monitoring: Dissolved Oxygen"),
     p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar."),
-
+    
     # main body
     navset_card_tab(
         full_screen = TRUE,
-
+        
         # sidebar: stn info ----
         sidebar = sidebar(id = "stn_sidebar",
                           position = "right",
@@ -44,69 +44,69 @@ ui <- page_fillable(
         ),
         
         
-
-            # map tabs ----
-                # panel 1: trend map ----
-                nav_panel(
-                    "Trends",
-                    full_screen = TRUE,
+        
+        # map tabs ----
+        # panel 1: trend map ----
+        nav_panel(
+            "Trends",
+            full_screen = TRUE,
+            
+            card_header("Where is DO changing over time?",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
+                        ), # end tooltip
+            ), # end header
+            
+            
+            
+            # sidebar layout
+            
+            layout_sidebar(
+                sidebar = sidebar(
+                    # title = "Map Options",
+                    width = "30%",
+                    position = "left",
+                    open = TRUE,
                     
-                    card_header("Where is DO changing over time?",
-                                tooltip(
-                                    bsicons::bs_icon("info-circle"),
-                                    "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
-                                ), # end tooltip
-                    ), # end header
+                    div(
+                        "Select trend to view: ",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
+                        ),
+                        radioButtons("trendParam_sel", label = NULL,
+                                     choiceNames = c("Median DO Concentration",
+                                                     "Time DO < 2",
+                                                     "Time DO < 5"),
+                                     choiceValues = c("domgl_median",
+                                                      "LT2",
+                                                      "LT5"),
+                                     selected = "domgl_median")
+                    ),
                     
-                    
-                    
-                    # sidebar layout
-                    
-                    layout_sidebar(
-                        sidebar = sidebar(
-                            # title = "Map Options",
-                            width = "30%",
-                            position = "left",
-                            open = TRUE,
-                            
-                            div(
-                                "Select trend to view: ",
-                                tooltip(
-                                    bsicons::bs_icon("info-circle"),
-                                    "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
-                                ),
-                                radioButtons("trendParam_sel", label = NULL,
-                                             choiceNames = c("Median DO Concentration",
-                                                             "Time DO < 2",
-                                                             "Time DO < 5"),
-                                             choiceValues = c("domgl_median",
-                                                              "LT2",
-                                                              "LT5"),
-                                             selected = "domgl_median")
-                            ),
-                            
-                            # choose which values to see
-                            div(class = "two-col-checks",
-                                checkboxGroupInput("trendShow_sel", "Select results to include:",
-                                                   choices = c("increasing",
-                                                               "decreasing",
-                                                               "no trend",
-                                                               "not calculated"),
-                                                   selected = c("increasing",
-                                                                "decreasing",
-                                                                "no trend",
-                                                                "not calculated"),
-                                                   inline = TRUE)
-                            )
-                        ), # end sidebar
-                        
-                        # map
-                        leafletOutput("map_trends")
-                    
-                        ) # end tab's layout_sidebar
+                    # choose which values to see
+                    div(class = "two-col-checks",
+                        checkboxGroupInput("trendShow_sel", "Select results to include:",
+                                           choices = c("increasing",
+                                                       "decreasing",
+                                                       "no trend",
+                                                       "not calculated"),
+                                           selected = c("increasing",
+                                                        "decreasing",
+                                                        "no trend",
+                                                        "not calculated"),
+                                           inline = TRUE)
+                    )
+                ), # end sidebar
                 
-                    ), # end nav panel 1
+                # map
+                leafletOutput("map_trends")
                 
+            ) # end tab's layout_sidebar
+            
+        ), # end nav panel 1
+        
         # panel 3: medians map ----
         nav_panel(
             "Long-term medians",
@@ -157,102 +157,102 @@ ui <- page_fillable(
         ), # end nav panel 3        
         
         
-                # panel 2: low do map ----
-                nav_panel(
-                    "Select-a-Year",
-                    full_screen = TRUE,
+        # panel 2: low do map ----
+        nav_panel(
+            "Select-a-Year",
+            full_screen = TRUE,
+            
+            card_header("In the selected year, how much of the time was DO below the selected threshold?",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "Info here about % of readings, and how typical/unusual was determined"
+                        ) # end tooltip
+            ), # end header
+            
+            p("'Typical' and 'Unusual' were defined based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
+            
+            # sidebar layout, for map options
+            layout_sidebar(
+                sidebar = sidebar(
+                    # title = "Map Options",
+                    width = "30%",
+                    position = "left",
+                    open = TRUE,
                     
-                    card_header("In the selected year, how much of the time was DO below the selected threshold?",
-                                tooltip(
-                                    bsicons::bs_icon("info-circle"),
-                                    "Info here about % of readings, and how typical/unusual was determined"
-                                ) # end tooltip
-                    ), # end header
                     
-                    p("'Typical' and 'Unusual' were defined based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
+                    # choose threshold
+                    radioButtons("threshold_sel", "Define 'low' DO as:",
+                                 choiceNames = c("<2 mg/L", "<5 mg/L"),
+                                 choiceValues = c("LT2", "LT5"),
+                                 selected = "LT5"),
                     
-                    # sidebar layout, for map options
-                    layout_sidebar(
-                        sidebar = sidebar(
-                            # title = "Map Options",
-                            width = "30%",
-                            position = "left",
-                            open = TRUE,
-                            
-                            
-                            # choose threshold
-                            radioButtons("threshold_sel", "Define 'low' DO as:",
-                                         choiceNames = c("<2 mg/L", "<5 mg/L"),
-                                         choiceValues = c("LT2", "LT5"),
-                                         selected = "LT5"),
-                            
-                            # year selection
-                            div(
-                                class = "highlight-slider",
-                                sliderInput(
-                                    "year",
-                                    "Select Year:",
-                                    min = min(tomap$year),
-                                    max = max(tomap$year),
-                                    value = max(tomap$year),
-                                    step = 1,
-                                    sep = "",
-                                    animate = TRUE
-                                )
+                    # year selection
+                    div(
+                        class = "highlight-slider",
+                        sliderInput(
+                            "year",
+                            "Select Year:",
+                            min = min(tomap$year),
+                            max = max(tomap$year),
+                            value = max(tomap$year),
+                            step = 1,
+                            sep = "",
+                            animate = TRUE
+                        )
+                    ),
+                    
+                    # size points by % of time where DO was low?
+                    div(
+                        style = "display: flex; align-items: top;",
+                        checkboxInput("size_sel", "Size points by % time",
+                                      value = FALSE),
+                        tooltip(
+                            bsicons::bs_icon("info-circle", 
+                                             width = "50", height = "20",
+                                             # style = " color: blue;",
+                                             color = "blue"
                             ),
-                            
-                            # size points by % of time where DO was low?
-                            div(
-                                style = "display: flex; align-items: top;",
-                                checkboxInput("size_sel", "Size points by % time",
-                                              value = FALSE),
-                                tooltip(
-                                    bsicons::bs_icon("info-circle", 
-                                                     width = "50", height = "20",
-                                                     # style = " color: blue;",
-                                                     color = "blue"
-                                    ),
-                                    "Points will be sized according to the percent of time DO was below the selected threshold"
-                                )
-                                
-                            ),
-                            
-                            # station type
-                            checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
-                                               choiceNames = c("typical", "unusual"),
-                                               choiceValues = c(0, 1),
-                                               selected = c(0, 1)),
-         
-
-                            sliderInput("cutoff_range", 
-                                        "Limit to stations in this range of low DO frequency", 
-                                        min = 0, 
-                                        max = 100, 
-                                        value = c(0, 100), 
-                                        step = 1),
-                            
-                            
-                            
-                            # choose how to color points
-                            radioButtons("color_sel", "Color points by:",
-                                         choiceNames = c("typical or unusual",
-                                                         "% of year with low DO"),
-                                         choiceValues = c("col_unus",
-                                                          "col_time.hypoxic"),
-                                         selected = "col_time.hypoxic")
-                        ), # end sidebar
+                            "Points will be sized according to the percent of time DO was below the selected threshold"
+                        )
                         
-                        # map
-                        leafletOutput("map_timeLow")
+                    ),
                     
-                    ) # end tab's layout_sidebar
+                    # station type
+                    checkboxGroupInput("unus_sel", "Show stations where the amount of low DO was:",
+                                       choiceNames = c("typical", "unusual"),
+                                       choiceValues = c(0, 1),
+                                       selected = c(0, 1)),
                     
-                ) # end nav-panel 2
+                    
+                    sliderInput("cutoff_range", 
+                                "Limit to stations in this range of low DO frequency", 
+                                min = 0, 
+                                max = 100, 
+                                value = c(0, 100), 
+                                step = 1),
+                    
+                    
+                    
+                    # choose how to color points
+                    radioButtons("color_sel", "Color points by:",
+                                 choiceNames = c("typical or unusual",
+                                                 "% of year with low DO"),
+                                 choiceValues = c("col_unus",
+                                                  "col_time.hypoxic"),
+                                 selected = "col_time.hypoxic")
+                ), # end sidebar
+                
+                # map
+                leafletOutput("map_timeLow")
+                
+            ) # end tab's layout_sidebar
+            
+        ) # end nav-panel 2
         
         
         
-            ) # end nav-panel layout
-
+    ) # end nav-panel layout
+    
 )  # end ui
 
 
@@ -261,7 +261,8 @@ server <- function(input, output, session) {
     
     # map setup ----
     output$map_medians <- renderLeaflet({
-        leaflet() |> 
+        # base map
+        m <- leaflet() |> 
             addTiles(group = "Default (OpenStreetMap") |> 
             addProviderTiles(provider = providers$CartoDB.Positron,
                              group = "Positron (CartoDB)") |> 
@@ -271,10 +272,53 @@ server <- function(input, output, session) {
             addLayersControl(baseGroups = c("Default (OpenStreetMap)",
                                             "Positron (CartoDB)",
                                             "Esri"))
+        
+        # add what I want to render the first time the map shows
+        # filter the data to median do
+        filtered2 <- tomap_medians |>
+            filter(param == "domgl_median") |>
+            mutate(
+                # if user wants to size points by pct, use size 1. if they don't, make it 4.
+                # size1 = case_when(input$median.size_sel == FALSE ~ 6,
+                #                   .default = value)
+                size1 = 6
+            ) 
+        
+        # use the right color palette function
+        palette_trnd <- palette_median.mgl
+        
+        # add the markers to the map
+        m <- m |>
+            addCircleMarkers(
+                data = filtered2,
+                lng = ~long,
+                lat = ~lat,
+                layerId = ~station,
+                color = "black",
+                weight = 1,
+                fillColor = ~palette_trnd(value),
+                fillOpacity = 0.7,
+                radius = ~size1,  # base it on the value
+                popup = ~paste(station, param, round(value, 1))
+            )  |>
+            clearControls()
+        
+        # add the legend
+        m <- m |>
+            addLegend(position = "bottomright",
+                      colors = palette_median.mgl(c(2, 4, 6, 8, 10)),
+                      labels = c(2, 4, 6, 8, 10),
+                      title = "median DO (mg/L)",
+                      opacity = 0.7)
+        
+        # return the map
+        m
+        
     })
     
     output$map_trends <- renderLeaflet({
-        leaflet() |> 
+        # base map
+        m <- leaflet() |> 
             addTiles(group = "Default (OpenStreetMap") |> 
             addProviderTiles(provider = providers$CartoDB.Positron,
                              group = "Positron (CartoDB)") |> 
@@ -284,6 +328,39 @@ server <- function(input, output, session) {
             addLayersControl(baseGroups = c("Default (OpenStreetMap)",
                                             "Positron (CartoDB)",
                                             "Esri"))
+        
+        # filter the data
+        filtered2 <- stn_trends_long |> 
+            filter(param == "domgl_median")
+        
+        # use the right color palette function
+        palette_trnd <- palette_trnd.mgl
+        
+        # add markers to the map
+        m <- m |> 
+            addCircleMarkers(
+                data = filtered2,
+                lng = ~long,
+                lat = ~lat,
+                layerId = ~station,
+                color = "black",
+                weight = 1,
+                fillColor = ~palette_trnd(map_color),
+                fillOpacity = 0.7,
+                radius = 5
+            )  |> 
+            addLegend(position = "bottomright",
+                      colors = palette_trnd(c("increasing",
+                                              "decreasing",
+                                              "no trend",
+                                              "not calculated")),
+                      labels = c("increasing",
+                                 "decreasing",
+                                 "no trend",
+                                 "not calculated"),
+                      title = "Trend",
+                      opacity = 0.7)
+        
     })
     
     output$map_timeLow <- renderLeaflet({
@@ -366,16 +443,16 @@ server <- function(input, output, session) {
                 # size1 = case_when(input$median.size_sel == FALSE ~ 6,
                 #                   .default = value)
                 size1 = 6
-                ) 
-
-
+            ) 
+        
+        
         # use the right color palette function
         palette_trnd <- if(input$medianParam_sel == "domgl_median") {
             palette_median.mgl
         } else {
             palette_time.hypoxic
         }
-
+        
         m <- leafletProxy("map_medians", data = filtered2) |>
             clearMarkers() |>
             addCircleMarkers(
@@ -390,10 +467,10 @@ server <- function(input, output, session) {
                 popup = ~paste(station, param, round(value, 1))
             )  |>
             clearControls()
-
-
+        
+        
         # deal with legends
-
+        
         # if(input$median.size_sel == TRUE){
         #     m <- m |>
         #         addLegendCustom(
@@ -404,7 +481,7 @@ server <- function(input, output, session) {
         #             opacity = 0.5            # Custom opacity (0 to 1)
         #         )
         # }
-
+        
         if(input$medianParam_sel != "domgl_median"){
             m <- m |>
                 addLegend(position = "bottomright",
@@ -420,10 +497,10 @@ server <- function(input, output, session) {
                           title = "median DO (mg/L)",
                           opacity = 0.7)
         }
-
-
+        
+        
         m
-
+        
     })
     
     
