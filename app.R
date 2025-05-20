@@ -162,7 +162,9 @@ ui <- page_fillable(
             "Select-a-Year",
             full_screen = TRUE,
             
-            card_header("In the selected year, how much of the time was DO below the selected threshold?",
+            card_header(span("In the selected year (", 
+                               textOutput("selected_year", inline = TRUE),
+                               "), how much of the time was DO below the selected threshold?"),
                         tooltip(
                             bsicons::bs_icon("info-circle"),
                             "Info here about % of readings, and how typical/unusual was determined"
@@ -470,6 +472,12 @@ server <- function(input, output, session) {
             palette_time.hypoxic
         }
         
+        # see if a station has been selected
+        current_station_id <- selected_station()
+        
+        # if no station selected, normal map:
+        if(is.null(current_station_id)){
+        
         m <- leafletProxy("map_medians", data = filtered2) |>
             clearMarkers() |>
             addCircleMarkers(
@@ -484,6 +492,25 @@ server <- function(input, output, session) {
                 popup = ~paste(station, param, round(value, 1))
             )  |>
             clearControls()
+        
+        } else {
+            # make the selected station stand out
+            m <- leafletProxy("map_medians", data = filtered2) |>
+                clearMarkers() |>
+                addCircleMarkers(
+                    lng = ~long,
+                    lat = ~lat,
+                    layerId = ~station,
+                    color = ~ifelse(station == current_station_id, "#E67E22", "black"),
+                    weight = ~ifelse(station == current_station_id, 4, 1),
+                    opacity = ~ifelse(station == current_station_id, 1.0, 0.7),
+                    fillColor = ~palette_trnd(value),
+                    fillOpacity = ~ifelse(station == current_station_id, 0.9, 0.7),
+                    radius = ~ifelse(station == current_station_id, 10, 6),
+                    popup = ~paste(station, param, round(value, 1))
+                )  |>
+                clearControls()
+        }
         
         
         # deal with legends
@@ -535,6 +562,12 @@ server <- function(input, output, session) {
             palette_trnd.thrsh
         }
         
+        # see if a station has been selected
+        current_station_id <- selected_station()
+        
+        # if not, normal map:
+        if(is.null(current_station_id)){
+        
         leafletProxy("map_trends", data = filtered2) |> 
             clearMarkers() |> 
             addCircleMarkers(
@@ -545,7 +578,7 @@ server <- function(input, output, session) {
                 weight = 1,
                 fillColor = ~palette_trnd(map_color),
                 fillOpacity = 0.7,
-                radius = 5
+                radius = 6
             )  |> 
             clearControls() |>
             addLegend(position = "bottomright",
@@ -559,11 +592,47 @@ server <- function(input, output, session) {
                                  "not calculated"),
                       title = "Trend",
                       opacity = 0.7)
+            
+        } else {
+            # make the selected station a different size and weight
+            leafletProxy("map_trends", data = filtered2) |> 
+                clearMarkers() |> 
+                addCircleMarkers(
+                    lng = ~long,
+                    lat = ~lat,
+                    layerId = ~station,
+                    color = ~ifelse(station == current_station_id, "#E67E22", "black"),
+                    weight = ~ifelse(station == current_station_id, 4, 1),
+                    opacity = ~ifelse(station == current_station_id, 1.0, 0.7),
+                    fillColor = ~palette_trnd(map_color),
+                    fillOpacity = ~ifelse(station == current_station_id, 0.9, 0.7),
+                    radius = ~ifelse(station == current_station_id, 10, 6)
+                )  |> 
+                clearControls() |>
+                addLegend(position = "bottomright",
+                          colors = palette_trnd(c("increasing",
+                                                  "decreasing",
+                                                  "no trend",
+                                                  "not calculated")),
+                          labels = c("increasing",
+                                     "decreasing",
+                                     "no trend",
+                                     "not calculated"),
+                          title = "Trend",
+                          opacity = 0.7)
+        }
+
         
     })
     
     # timeLow ----
-    # Update map_timeLow based on selections
+    
+    # make text output for card header
+    output$selected_year <- renderText({
+        input$year
+    })
+    
+    # Shiny assistant's version to circle selected station:
     observe({
         # Filter data based on the selected year and cutoff value
         tomap_sub <- tomap |> rowwise() |> 
@@ -585,42 +654,70 @@ server <- function(input, output, session) {
                 input$color_sel == "col_time.hypoxic" ~ symbol_time
             ))
         
+        # Get the currently selected station ID
+        current_station_id <- selected_station()
+        
         # figure out typical and unusual rows
         rows_unusual <- which(tomap_sub$unusual == 1)
         rows_typical <- which(tomap_sub$unusual == 0)
         
-        
+        # Clear all markers
         m <- leafletProxy("map_timeLow", data = tomap_sub) |>
             clearMarkers() |> 
-            addMarkers(
-                data = tomap_sub[rows_typical, ],
-                group = "in typical range",
-                lng = ~long,
-                lat = ~lat,
-                layerId = ~station,
-                icon = ~icons(
-                    iconUrl = symbol,
-                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-                    iconHeight = size1*2
-                ),
-                popup = ~paste(station, year, round(pct, 1))
-            ) |> 
-            addMarkers(
-                data = tomap_sub[rows_unusual, ],
-                lng = ~long,
-                lat = ~lat,
-                layerId = ~station,
-                icon = ~icons(
-                    iconUrl = symbol,
-                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-                    iconHeight = size1*2
-                ),
-                popup = ~paste(station, year, round(pct, 1)) 
-            ) |> 
-            clearControls() 
+            clearControls()
+        
+        # If a station is selected, add a highlight circle around its marker
+        if(!is.null(current_station_id)) {
+            # Find the selected station in the data
+            selected_row <- which(tomap_sub$station == current_station_id)
+            
+            if(length(selected_row) > 0) {
+                # Add a circle marker underneath the icon for the selected station
+                selected_data <- tomap_sub[selected_row, ]
+                
+                m <- m |> addCircleMarkers(
+                    data = selected_data,
+                    lng = ~long,
+                    lat = ~lat,
+                    radius = 10,  # Larger than the icon to create a highlight effect
+                    color = "#E67E22",  # Orange outline
+                    weight = 4,
+                    opacity = 1.0,
+                    fillOpacity = 0  # Transparent fill
+                )
+            }
+        }
+        
+        # Add typical markers
+        m <- m |> addMarkers(
+            data = tomap_sub[rows_typical, ],
+            group = "in typical range",
+            lng = ~long,
+            lat = ~lat,
+            layerId = ~station,
+            icon = ~icons(
+                iconUrl = symbol,
+                iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                iconHeight = size1*2
+            ),
+            popup = ~paste(station, year, round(pct, 1))
+        ) 
+        
+        # Add unusual markers
+        m <- m |> addMarkers(
+            data = tomap_sub[rows_unusual, ],
+            lng = ~long,
+            lat = ~lat,
+            layerId = ~station,
+            icon = ~icons(
+                iconUrl = symbol,
+                iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                iconHeight = size1*2
+            ),
+            popup = ~paste(station, year, round(pct, 1)) 
+        )
         
         # deal with legends
-        
         if(input$size_sel == TRUE){
             m <- m |> 
                 addLegendCustom(
@@ -661,9 +758,110 @@ server <- function(input, output, session) {
                           opacity = 0.7)
         }
         
-        
         m
     })
+    
+    # # Update map_timeLow based on selections
+    # observe({
+    #     # Filter data based on the selected year and cutoff value
+    #     tomap_sub <- tomap |> rowwise() |> 
+    #         mutate(
+    #             # if user wants to size points by pct, use size 1. if they don't, make it 4.
+    #             size1 = case_when(input$size_sel == FALSE ~ 6,
+    #                               .default = size)) |> 
+    #         filter(year == input$year, 
+    #                threshold == input$threshold_sel,
+    #                pct >= input$cutoff_range[1],
+    #                pct <= input$cutoff_range[2],
+    #                unusual %in% input$unus_sel)  
+    #     
+    #     
+    #     # choose symbols based on what user wants to color by:
+    #     tomap_sub <- tomap_sub |> 
+    #         mutate(symbol = case_when(
+    #             input$color_sel == "col_unus" ~ symbol_unus,
+    #             input$color_sel == "col_time.hypoxic" ~ symbol_time
+    #         ))
+    #     
+    #     # figure out typical and unusual rows
+    #     rows_unusual <- which(tomap_sub$unusual == 1)
+    #     rows_typical <- which(tomap_sub$unusual == 0)
+    #     
+    #     
+    #     m <- leafletProxy("map_timeLow", data = tomap_sub) |>
+    #         clearMarkers() |> 
+    #         addMarkers(
+    #             data = tomap_sub[rows_typical, ],
+    #             group = "in typical range",
+    #             lng = ~long,
+    #             lat = ~lat,
+    #             layerId = ~station,
+    #             icon = ~icons(
+    #                 iconUrl = symbol,
+    #                 iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+    #                 iconHeight = size1*2
+    #             ),
+    #             popup = ~paste(station, year, round(pct, 1))
+    #         ) |> 
+    #         addMarkers(
+    #             data = tomap_sub[rows_unusual, ],
+    #             lng = ~long,
+    #             lat = ~lat,
+    #             layerId = ~station,
+    #             icon = ~icons(
+    #                 iconUrl = symbol,
+    #                 iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+    #                 iconHeight = size1*2
+    #             ),
+    #             popup = ~paste(station, year, round(pct, 1)) 
+    #         ) |> 
+    #         clearControls() 
+    #     
+    #     # deal with legends
+    #     
+    #     if(input$size_sel == TRUE){
+    #         m <- m |> 
+    #             addLegendCustom(
+    #                 sizes = legend_sizes$size, 
+    #                 labels = legend_sizes$label,
+    #                 colors = "black",
+    #                 position = "bottomleft",   # Custom position
+    #                 opacity = 0.5            # Custom opacity (0 to 1)
+    #             )
+    #     }
+    #     
+    #     if(input$color_sel == "col_unus"){
+    #         m <- m |> 
+    #             addLegendSymbol(title = "Shape & Fill",
+    #                             values = c('typical', 'unusual'), 
+    #                             shape = c('circle', 'rect'), 
+    #                             fillColor = palette_unus(c(0, 1)),
+    #                             color = 'black',
+    #                             opacity = 0.7,
+    #                             width = 15,
+    #                             position = "bottomright")
+    #     }
+    #     
+    #     if(input$color_sel == "col_time.hypoxic"){
+    #         m <- m |> 
+    #             addLegendSymbol(title = "Shape",
+    #                             values = c('typical', 'unusual'), 
+    #                             shape = c('circle', 'rect'), 
+    #                             fillColor = palette_time.hypoxic(50),
+    #                             color = 'black',
+    #                             opacity = 0.7,
+    #                             width = 15,
+    #                             position = "bottomright") |> 
+    #             addLegend(position = "bottomright",
+    #                       colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
+    #                       labels = c(0, 25, 50, 75, 100),
+    #                       title = "Fill: % of year",
+    #                       opacity = 0.7)
+    #     }
+    #     
+    #     
+    #     m
+    # })
     
     
     # map clicks ----

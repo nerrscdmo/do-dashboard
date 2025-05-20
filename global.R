@@ -144,7 +144,7 @@ symbols_unus <- Map(
     shape = symbols_unus.grid$shape,
     fillColor = symbols_unus.grid$color,
     color = "black",
-    opacity = 0.5,
+    opacity = 0.7,
     height = 20,
     width = 20
 )
@@ -168,7 +168,7 @@ symbols_time.hypoxic <- Map(
     shape = symbols_time.grid$shape,
     fillColor = symbols_time.grid$color,
     color = "black",
-    opacity = 0.5,
+    opacity = 0.7,
     height = 20,
     width = 20
 )
