@@ -54,7 +54,7 @@ ui <- page_fillable(
             card_header("Where is DO changing over time?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
+                            "These trends were calculated as part of a SWMP Synthesis project. Stations were included only if they had at least 10 years of data and were active as of 2022."
                         ), # end tooltip
             ), # end header
             
@@ -115,7 +115,7 @@ ui <- page_fillable(
             card_header("What is 'normal' for each station?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
+                            "The values shown on the map are the long-term median values of each annual value (for time <2 or 5 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."
                         ), # end tooltip
             ), # end header
             
@@ -264,7 +264,7 @@ ui <- page_fillable(
             ), # end header
             
             p("Put text here about different options"),
-            p("...what each tab does"),
+            p("...what each tab does, how to interact with the maps, what pops up in the sidebar and how you can interact with that"),
             p("...about SWMP data"),
             p("...text about dashboard development and for more information, etc.")
             
