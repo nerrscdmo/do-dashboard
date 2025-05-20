@@ -92,6 +92,8 @@ palette_unus <- colorFactor(palette = c("#2166AC", "#B2182B"),  # from Tol's BuR
 
 palette_time.hypoxic <- colorNumeric(palette = "YlOrRd", domain = c(0, 100))
 
+palette_median.mgl <- colorNumeric(palette = "YlGnBu", domain = c(0, 14))
+
 palette_trnd.mgl <- colorFactor(palette = c("#2166AC", "#B2182B", "#FFEE99", "#7F7F7F"),  # from Tol's BuRd EXCEPT for 'not calcd' - need to check this
                                 levels = c("increasing", "decreasing", "no trend", "not calculated"))
 
@@ -178,3 +180,22 @@ tomap <- left_join(tomap, symbols_time.grid,
                           "pct_rounded" = "pcts"))
 
 # rm(stn_mmyr, stn_yr, stn_trends, stn_trends2)
+
+# generate data frame to make map of medians
+tomap_medians1 <- tomap |> 
+    summarize(.by = c(station, threshold),
+              medianLowDO = median(pct, na.rm = TRUE)) |> 
+    pivot_wider(names_from = threshold,
+                values_from = medianLowDO)
+tomap_medians2 <- tomap |> 
+    select(station, year, median.mgl, lat, long) |> 
+    distinct() |> 
+    summarize(.by = station,
+              domgl_median = median(median.mgl, na.rm = TRUE),
+              lat = median(lat, na.rm = TRUE),
+              long = median(long, na.rm = TRUE))
+tomap_medians <- full_join(tomap_medians1, tomap_medians2) |> 
+    pivot_longer(2:4,
+                 names_to = "param",
+                 values_to = "value")
+rm(tomap_medians1, tomap_medians2)

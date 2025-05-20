@@ -107,10 +107,59 @@ ui <- page_fillable(
                 
                     ), # end nav panel 1
                 
+        # panel 3: medians map ----
+        nav_panel(
+            "Long-term medians",
+            full_screen = TRUE,
+            
+            card_header("What is 'normal' for each station?",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "If a station had at least 5 years of data, a trend through time was calculated using simple linear regression."
+                        ), # end tooltip
+            ), # end header
+            
+            
+            
+            # sidebar layout
+            
+            layout_sidebar(
+                sidebar = sidebar(
+                    # title = "Map Options",
+                    width = "30%",
+                    position = "left",
+                    open = TRUE,
+                    
+                    div(
+                        "Select DO metric to view: ",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
+                        ),
+                        radioButtons("medianParam_sel", label = NULL,
+                                     choiceNames = c("Median DO Concentration",
+                                                     "Time DO < 2",
+                                                     "Time DO < 5"),
+                                     choiceValues = c("domgl_median",
+                                                      "LT2",
+                                                      "LT5"),
+                                     selected = "domgl_median")
+                    ),
+                    
+                    
+                ), # end sidebar
                 
+                # map
+                leafletOutput("map_medians")
+                
+            ) # end tab's layout_sidebar
+            
+        ), # end nav panel 3        
+        
+        
                 # panel 2: low do map ----
                 nav_panel(
-                    "Low DO by year",
+                    "Select-a-Year",
                     full_screen = TRUE,
                     
                     card_header("In the selected year, how much of the time was DO below the selected threshold?",
@@ -147,7 +196,8 @@ ui <- page_fillable(
                                     max = max(tomap$year),
                                     value = max(tomap$year),
                                     step = 1,
-                                    sep = ""
+                                    sep = "",
+                                    animate = TRUE
                                 )
                             ),
                             
@@ -197,8 +247,10 @@ ui <- page_fillable(
                     
                     ) # end tab's layout_sidebar
                     
-                ),  # end nav-panel 2
-                
+                ) # end nav-panel 2
+        
+        
+        
             ) # end nav-panel layout
 
 )  # end ui
@@ -208,6 +260,19 @@ ui <- page_fillable(
 server <- function(input, output, session) {
     
     # map setup ----
+    output$map_medians <- renderLeaflet({
+        leaflet() |> 
+            addTiles(group = "Default (OpenStreetMap") |> 
+            addProviderTiles(provider = providers$CartoDB.Positron,
+                             group = "Positron (CartoDB)") |> 
+            addProviderTiles(provider = providers$Esri,
+                             group = "Esri") |> 
+            setView(lng = -98.5, lat = 42.8, zoom = 2.4)  |>  # Central US, zoomed out to include AK and HI
+            addLayersControl(baseGroups = c("Default (OpenStreetMap)",
+                                            "Positron (CartoDB)",
+                                            "Esri"))
+    })
+    
     output$map_trends <- renderLeaflet({
         leaflet() |> 
             addTiles(group = "Default (OpenStreetMap") |> 
@@ -290,6 +355,76 @@ server <- function(input, output, session) {
         m
     })
     
+    
+    # medians  ----
+    # update median map based on selections
+    observe({
+        filtered2 <- tomap_medians |>
+            filter(param == input$medianParam_sel) |>
+            mutate(
+                # if user wants to size points by pct, use size 1. if they don't, make it 4.
+                # size1 = case_when(input$median.size_sel == FALSE ~ 6,
+                #                   .default = value)
+                size1 = 6
+                ) 
+
+
+        # use the right color palette function
+        palette_trnd <- if(input$medianParam_sel == "domgl_median") {
+            palette_median.mgl
+        } else {
+            palette_time.hypoxic
+        }
+
+        m <- leafletProxy("map_medians", data = filtered2) |>
+            clearMarkers() |>
+            addCircleMarkers(
+                lng = ~long,
+                lat = ~lat,
+                layerId = ~station,
+                color = "black",
+                weight = 1,
+                fillColor = ~palette_trnd(value),
+                fillOpacity = 0.7,
+                radius = ~size1,  # base it on the value
+                popup = ~paste(station, param, round(value, 1))
+            )  |>
+            clearControls()
+
+
+        # deal with legends
+
+        # if(input$median.size_sel == TRUE){
+        #     m <- m |>
+        #         addLegendCustom(
+        #             sizes = legend_sizes$size,
+        #             labels = legend_sizes$label,
+        #             colors = "black",
+        #             position = "bottomleft",   # Custom position
+        #             opacity = 0.5            # Custom opacity (0 to 1)
+        #         )
+        # }
+
+        if(input$medianParam_sel != "domgl_median"){
+            m <- m |>
+                addLegend(position = "bottomright",
+                          colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
+                          labels = c(0, 25, 50, 75, 100),
+                          title = "median % of year with low DO",
+                          opacity = 0.7)
+        } else {
+            m <- m |>
+                addLegend(position = "bottomright",
+                          colors = palette_median.mgl(c(2, 4, 6, 8, 10)),
+                          labels = c(2, 4, 6, 8, 10),
+                          title = "median DO (mg/L)",
+                          opacity = 0.7)
+        }
+
+
+        m
+
+    })
     
     
     # trends ----
@@ -441,9 +576,18 @@ server <- function(input, output, session) {
     # Create reactive value to store selected station
     selected_station <- reactiveVal(NULL)
     
-    # Add click observers to both maps
+    # Add click observers to all maps
     observeEvent(input$map_trends_marker_click, {
         click <- input$map_trends_marker_click
+        station_id <- click$id
+        selected_station(station_id)
+        # Open the sidebar when a station is clicked
+        sidebar_toggle("stn_sidebar", open = TRUE)
+        
+    })
+    
+    observeEvent(input$map_medians_marker_click, {
+        click <- input$map_medians_marker_click
         station_id <- click$id
         selected_station(station_id)
         # Open the sidebar when a station is clicked
