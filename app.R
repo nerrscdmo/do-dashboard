@@ -786,7 +786,7 @@ server <- function(input, output, session) {
             open = FALSE,
             
             h4(paste0("Selected Station: ", selected_station())),
-            span("Some info here about options",
+            span("Click to expand the section you're interested in.",
                  tooltip(
                      bsicons::bs_icon("info-circle"),
                      HTML("<p>Pop graphs out to full screen from the bottom right corner.</p>
@@ -835,7 +835,9 @@ server <- function(input, output, session) {
             ),
             
             accordion_panel(
-                title = "Selected Year",
+                title = paste("Selected Year:", input$year),
+                tags$small("Choose a year from the 'Select-a-Year' tab."),
+                
                 plotOutput("lowDOdist", height = "300px", width = "100%")
             )
         )
