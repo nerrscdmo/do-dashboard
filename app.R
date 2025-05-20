@@ -247,9 +247,26 @@ ui <- page_fillable(
                 
             ) # end tab's layout_sidebar
             
-        ) # end nav-panel 2
+        ), # end nav-panel 2
         
-        
+        # panel 4: Instructions ----
+        nav_panel(
+            "Using this dashboard",
+            full_screen = FALSE,
+            
+            card_header("Tips and Tricks",
+                        tooltip(
+                            bsicons::bs_icon("info-circle"),
+                            "Info here about % of readings, and how typical/unusual was determined"
+                        ) # end tooltip
+            ), # end header
+            
+            p("Put text here about different options"),
+            p("...what each tab does"),
+            p("...about SWMP data"),
+            p("...text about dashboard development and for more information, etc.")
+            
+        ) # end nav-panel 4
         
     ) # end nav-panel layout
     
