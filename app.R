@@ -21,7 +21,7 @@ source("global.R")
 # UI ----
 ui <- page_fillable(
     # useBusyIndicators(),
-    autoWaiter(),
+    # autoWaiter(),
     # waiterPreloader(),
     # waiterOnBusy(),
     useWaiter(),
@@ -207,7 +207,7 @@ ui <- page_fillable(
                             value = max(tomap$year),
                             step = 1,
                             sep = "",
-                            animate = TRUE
+                            animate = FALSE
                         )
                     ),
                     
@@ -779,109 +779,6 @@ server <- function(input, output, session) {
         m
     })
     
-    # # Update map_timeLow based on selections
-    # observe({
-    #     # Filter data based on the selected year and cutoff value
-    #     tomap_sub <- tomap |> rowwise() |> 
-    #         mutate(
-    #             # if user wants to size points by pct, use size 1. if they don't, make it 4.
-    #             size1 = case_when(input$size_sel == FALSE ~ 6,
-    #                               .default = size)) |> 
-    #         filter(year == input$year, 
-    #                threshold == input$threshold_sel,
-    #                pct >= input$cutoff_range[1],
-    #                pct <= input$cutoff_range[2],
-    #                unusual %in% input$unus_sel)  
-    #     
-    #     
-    #     # choose symbols based on what user wants to color by:
-    #     tomap_sub <- tomap_sub |> 
-    #         mutate(symbol = case_when(
-    #             input$color_sel == "col_unus" ~ symbol_unus,
-    #             input$color_sel == "col_time.hypoxic" ~ symbol_time
-    #         ))
-    #     
-    #     # figure out typical and unusual rows
-    #     rows_unusual <- which(tomap_sub$unusual == 1)
-    #     rows_typical <- which(tomap_sub$unusual == 0)
-    #     
-    #     
-    #     m <- leafletProxy("map_timeLow", data = tomap_sub) |>
-    #         clearMarkers() |> 
-    #         addMarkers(
-    #             data = tomap_sub[rows_typical, ],
-    #             group = "in typical range",
-    #             lng = ~long,
-    #             lat = ~lat,
-    #             layerId = ~station,
-    #             icon = ~icons(
-    #                 iconUrl = symbol,
-    #                 iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-    #                 iconHeight = size1*2
-    #             ),
-    #             popup = ~paste(station, year, round(pct, 1))
-    #         ) |> 
-    #         addMarkers(
-    #             data = tomap_sub[rows_unusual, ],
-    #             lng = ~long,
-    #             lat = ~lat,
-    #             layerId = ~station,
-    #             icon = ~icons(
-    #                 iconUrl = symbol,
-    #                 iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-    #                 iconHeight = size1*2
-    #             ),
-    #             popup = ~paste(station, year, round(pct, 1)) 
-    #         ) |> 
-    #         clearControls() 
-    #     
-    #     # deal with legends
-    #     
-    #     if(input$size_sel == TRUE){
-    #         m <- m |> 
-    #             addLegendCustom(
-    #                 sizes = legend_sizes$size, 
-    #                 labels = legend_sizes$label,
-    #                 colors = "black",
-    #                 position = "bottomleft",   # Custom position
-    #                 opacity = 0.5            # Custom opacity (0 to 1)
-    #             )
-    #     }
-    #     
-    #     if(input$color_sel == "col_unus"){
-    #         m <- m |> 
-    #             addLegendSymbol(title = "Shape & Fill",
-    #                             values = c('typical', 'unusual'), 
-    #                             shape = c('circle', 'rect'), 
-    #                             fillColor = palette_unus(c(0, 1)),
-    #                             color = 'black',
-    #                             opacity = 0.7,
-    #                             width = 15,
-    #                             position = "bottomright")
-    #     }
-    #     
-    #     if(input$color_sel == "col_time.hypoxic"){
-    #         m <- m |> 
-    #             addLegendSymbol(title = "Shape",
-    #                             values = c('typical', 'unusual'), 
-    #                             shape = c('circle', 'rect'), 
-    #                             fillColor = palette_time.hypoxic(50),
-    #                             color = 'black',
-    #                             opacity = 0.7,
-    #                             width = 15,
-    #                             position = "bottomright") |> 
-    #             addLegend(position = "bottomright",
-    #                       colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
-    #                       labels = c(0, 25, 50, 75, 100),
-    #                       title = "Fill: % of year",
-    #                       opacity = 0.7)
-    #     }
-    #     
-    #     
-    #     m
-    # })
-    
-    
     # map clicks ----
     # Create reactive value to store selected station
     selected_station <- reactiveVal(NULL)
@@ -933,6 +830,7 @@ server <- function(input, output, session) {
     
     # Plotly graphs----
     output$stn_timeSeries <- renderPlotly({
+
         # identify the station
         stn <- selected_station()
         
@@ -1062,7 +960,7 @@ server <- function(input, output, session) {
                     ),
                     
                     # graph
-                    plotlyOutput("stn_timeSeries")
+                    withWaiter(plotlyOutput("stn_timeSeries"))
                 )
             ),
             
@@ -1070,7 +968,7 @@ server <- function(input, output, session) {
                 title = paste("Selected Year:", input$year),
                 tags$small("Choose a year from the 'Select-a-Year' tab."),
                 
-                plotOutput("lowDOdist", height = "300px", width = "100%")
+                withWaiter(plotOutput("lowDOdist", height = "300px", width = "100%"))
             )
         )
     })
