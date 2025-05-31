@@ -21,7 +21,7 @@ source("global.R")
 # UI ----
 ui <- page_fillable(
     # useBusyIndicators(),
-    # autoWaiter(),
+    autoWaiter(),
     # waiterPreloader(),
     # waiterOnBusy(),
     useWaiter(),
