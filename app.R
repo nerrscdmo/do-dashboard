@@ -12,6 +12,7 @@ library(tidyr)
 library(ggplot2)
 library(patchwork)
 library(ggrepel)
+library(waiter)
 
 # setup ----
 source(here::here("R", "functions.R"))
@@ -19,7 +20,12 @@ source("global.R")
 
 # UI ----
 ui <- page_fillable(
-    
+    # useBusyIndicators(),
+    autoWaiter(),
+    # waiterPreloader(),
+    # waiterOnBusy(),
+    useWaiter(),
+
     # css/html styling ----
     tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
@@ -50,6 +56,7 @@ ui <- page_fillable(
         nav_panel(
             "Trends",
             full_screen = TRUE,
+            useBusyIndicators(),
             
             card_header("Where is DO changing over time?",
                         tooltip(
@@ -111,6 +118,7 @@ ui <- page_fillable(
         nav_panel(
             "Long-term medians",
             full_screen = TRUE,
+            useBusyIndicators(),
             
             card_header("What is 'normal' for each station?",
                         tooltip(
@@ -277,6 +285,11 @@ ui <- page_fillable(
 
 # Server ----
 server <- function(input, output, session) {
+    # waiter new ----
+    w <- Waiter$new(
+        html = spin_3(),
+        color = transparent(0.5)
+    )
     
     # map setup ----
     output$map_medians <- renderLeaflet({
@@ -634,7 +647,12 @@ server <- function(input, output, session) {
     
     # Shiny assistant's version to circle selected station:
     observe({
+        # waiter show ----
+        w$show()
+        on.exit(w$hide())
+        
         # Filter data based on the selected year and cutoff value
+
         tomap_sub <- tomap |> rowwise() |> 
             mutate(
                 # if user wants to size points by pct, use size 1. if they don't, make it 4.
@@ -871,15 +889,26 @@ server <- function(input, output, session) {
     # Add click observers to all maps
     observeEvent(input$map_trends_marker_click, {
         click <- input$map_trends_marker_click
+        
+        # waiter show ----
+        w$show()
+        on.exit(w$hide())
+        
         station_id <- click$id
         selected_station(station_id)
+        
         # Open the sidebar when a station is clicked
         sidebar_toggle("stn_sidebar", open = TRUE)
-        
     })
     
     observeEvent(input$map_medians_marker_click, {
         click <- input$map_medians_marker_click
+        
+        # waiter show ----
+        w$show()
+        on.exit(w$hide())
+        
+        
         station_id <- click$id
         selected_station(station_id)
         # Open the sidebar when a station is clicked
@@ -889,6 +918,11 @@ server <- function(input, output, session) {
     
     observeEvent(input$map_timeLow_marker_click, {
         click <- input$map_timeLow_marker_click
+        
+        # waiter show ----
+        w$show()
+        on.exit(w$hide())
+        
         station_id <- click$id
         selected_station(station_id)
         # Open the sidebar when a station is clicked
