@@ -32,7 +32,16 @@ ui <- page_fillable(
     ),
     
     # header
-    h4("NERRS Monitoring: Dissolved Oxygen"),
+    div(
+        style = "display: flex; justify-content: space-between; align-items: center;",
+        h4("NERRS Monitoring: Dissolved Oxygen"),
+        tags$a(
+            icon("github"), 
+            href = "https://github.com/nerrscdmo/do-dashboard", 
+            target = "_blank", 
+            style = "color: inherit;"
+        )
+    ),
     p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar."),
     
     # main body
@@ -287,6 +296,7 @@ ui <- page_fillable(
 server <- function(input, output, session) {
     # waiter new ----
     w <- Waiter$new(
+        # id = "Select-a-Year",
         html = spin_3(),
         color = transparent(0.5)
     )
