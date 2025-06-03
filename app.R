@@ -20,10 +20,8 @@ source("global.R")
 
 # UI ----
 ui <- page_fillable(
-    # useBusyIndicators(),
-    autoWaiter(),
-    # waiterPreloader(),
-    # waiterOnBusy(),
+    autoWaiter(html = spin_3(),
+               color = transparent(0.5)),
     useWaiter(),
 
     # css/html styling ----
@@ -65,8 +63,7 @@ ui <- page_fillable(
         nav_panel(
             "Trends",
             full_screen = TRUE,
-            useBusyIndicators(),
-            
+
             card_header("Where is DO changing over time?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
@@ -127,8 +124,7 @@ ui <- page_fillable(
         nav_panel(
             "Long-term medians",
             full_screen = TRUE,
-            useBusyIndicators(),
-            
+
             card_header("What is 'normal' for each station?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
@@ -296,7 +292,6 @@ ui <- page_fillable(
 server <- function(input, output, session) {
     # waiter new ----
     w <- Waiter$new(
-        # id = "Select-a-Year",
         html = spin_3(),
         color = transparent(0.5)
     )
@@ -658,6 +653,7 @@ server <- function(input, output, session) {
     # Shiny assistant's version to circle selected station:
     observe({
         # waiter show ----
+        # spinner while everything is recalculating
         w$show()
         on.exit(w$hide())
         
