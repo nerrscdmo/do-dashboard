@@ -20,9 +20,10 @@ source("global.R")
 
 # UI ----
 ui <- page_fillable(
+    useWaiter(),
     autoWaiter(html = spin_3(),
                color = transparent(0.5)),
-    useWaiter(),
+
 
     # css/html styling ----
     tags$head(
