@@ -13,6 +13,7 @@ library(ggplot2)
 library(patchwork)
 library(ggrepel)
 library(waiter)
+library(glue)
 
 # setup ----
 source(here::here("R", "functions.R"))
@@ -1010,7 +1011,7 @@ server <- function(input, output, session) {
             summarize(total = n(),
                       decreasing = sum(significant == "yes" & direction == "decreasing"))
         pct <- round(tmp$decreasing / tmp$total * 100)
-        paste0(pct, "%")
+        glue("{tmp$decreasing} of {tmp$total}")
     })
     
     
