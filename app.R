@@ -23,25 +23,45 @@ ui <- page_fillable(
     useWaiter(),
     autoWaiter(html = spin_3(),
                color = transparent(0.5)),
-
-
+    
+    
     # css/html styling ----
     tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
     ),
     
-    # header
-    div(
-        style = "display: flex; justify-content: space-between; align-items: center;",
-        h4("NERRS Monitoring: Dissolved Oxygen"),
-        tags$a(
-            icon("github"), 
-            href = "https://github.com/nerrscdmo/do-dashboard", 
-            target = "_blank", 
-            style = "color: inherit;"
+    # Header ----
+    layout_columns(
+        col_widths = c(8, 4),
+        # Header, github link, description
+        div(
+            # Header + GitHub link
+            div(
+                style = "display: flex; justify-content: space-between; align-items: center;",
+                h3("NERRS Monitoring: Dissolved Oxygen"),
+                tags$a(
+                    icon("github"), 
+                    href = "https://github.com/nerrscdmo/do-dashboard", 
+                    target = "_blank", 
+                    style = "color: inherit;"
+                )
+            ),
+            
+            # Description
+            p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar.")
+        ),
+        
+        # Value box
+        value_box(
+            title = "Stations with Decreasing DO",
+            value = textOutput("station_count"),
+            # value = "49 of 105 stations",
+            showcase = bsicons::bs_icon("graph-down-arrow"),
+            showcase_layout = "left center",
+            theme = "danger",
+            max_height = "120px"
         )
     ),
-    p("Choose a tab to explore DO nationally. Change options in the left sidebar, and click on a station to see more detail in a right sidebar."),
     
     # main body
     navset_card_tab(
@@ -64,7 +84,7 @@ ui <- page_fillable(
         nav_panel(
             "Trends",
             full_screen = TRUE,
-
+            
             card_header("Where is DO changing over time?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
@@ -125,7 +145,7 @@ ui <- page_fillable(
         nav_panel(
             "Long-term medians",
             full_screen = TRUE,
-
+            
             card_header("What is 'normal' for each station?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
@@ -177,8 +197,8 @@ ui <- page_fillable(
             full_screen = TRUE,
             
             card_header(span("In the selected year (", 
-                               textOutput("selected_year", inline = TRUE),
-                               "), how much of the time was DO below the selected threshold?"),
+                             textOutput("selected_year", inline = TRUE),
+                             "), how much of the time was DO below the selected threshold?"),
                         tooltip(
                             bsicons::bs_icon("info-circle"),
                             "Info here about % of readings, and how typical/unusual was determined"
@@ -496,22 +516,22 @@ server <- function(input, output, session) {
         
         # if no station selected, normal map:
         if(is.null(current_station_id)){
-        
-        m <- leafletProxy("map_medians", data = filtered2) |>
-            clearMarkers() |>
-            addCircleMarkers(
-                lng = ~long,
-                lat = ~lat,
-                layerId = ~station,
-                color = "black",
-                weight = 1,
-                fillColor = ~palette_trnd(value),
-                fillOpacity = 0.7,
-                radius = ~size1,  # base it on the value
-                popup = ~paste(station, param, round(value, 1))
-            )  |>
-            clearControls()
-        
+            
+            m <- leafletProxy("map_medians", data = filtered2) |>
+                clearMarkers() |>
+                addCircleMarkers(
+                    lng = ~long,
+                    lat = ~lat,
+                    layerId = ~station,
+                    color = "black",
+                    weight = 1,
+                    fillColor = ~palette_trnd(value),
+                    fillOpacity = 0.7,
+                    radius = ~size1,  # base it on the value
+                    popup = ~paste(station, param, round(value, 1))
+                )  |>
+                clearControls()
+            
         } else {
             # make the selected station stand out
             m <- leafletProxy("map_medians", data = filtered2) |>
@@ -586,31 +606,31 @@ server <- function(input, output, session) {
         
         # if not, normal map:
         if(is.null(current_station_id)){
-        
-        leafletProxy("map_trends", data = filtered2) |> 
-            clearMarkers() |> 
-            addCircleMarkers(
-                lng = ~long,
-                lat = ~lat,
-                layerId = ~station,
-                color = "black",
-                weight = 1,
-                fillColor = ~palette_trnd(map_color),
-                fillOpacity = 0.7,
-                radius = 6
-            )  |> 
-            clearControls() |>
-            addLegend(position = "bottomright",
-                      colors = palette_trnd(c("increasing",
-                                              "decreasing",
-                                              "no trend",
-                                              "not calculated")),
-                      labels = c("increasing",
-                                 "decreasing",
-                                 "no trend",
-                                 "not calculated"),
-                      title = "Trend",
-                      opacity = 0.7)
+            
+            leafletProxy("map_trends", data = filtered2) |> 
+                clearMarkers() |> 
+                addCircleMarkers(
+                    lng = ~long,
+                    lat = ~lat,
+                    layerId = ~station,
+                    color = "black",
+                    weight = 1,
+                    fillColor = ~palette_trnd(map_color),
+                    fillOpacity = 0.7,
+                    radius = 6
+                )  |> 
+                clearControls() |>
+                addLegend(position = "bottomright",
+                          colors = palette_trnd(c("increasing",
+                                                  "decreasing",
+                                                  "no trend",
+                                                  "not calculated")),
+                          labels = c("increasing",
+                                     "decreasing",
+                                     "no trend",
+                                     "not calculated"),
+                          title = "Trend",
+                          opacity = 0.7)
             
         } else {
             # make the selected station a different size and weight
@@ -640,7 +660,7 @@ server <- function(input, output, session) {
                           title = "Trend",
                           opacity = 0.7)
         }
-
+        
         
     })
     
@@ -659,7 +679,7 @@ server <- function(input, output, session) {
         on.exit(w$hide())
         
         # Filter data based on the selected year and cutoff value
-
+        
         tomap_sub <- tomap |> rowwise() |> 
             mutate(
                 # if user wants to size points by pct, use size 1. if they don't, make it 4.
@@ -837,7 +857,7 @@ server <- function(input, output, session) {
     
     # Plotly graphs----
     output$stn_timeSeries <- renderPlotly({
-
+        
         # identify the station
         stn <- selected_station()
         
@@ -978,6 +998,17 @@ server <- function(input, output, session) {
                 withWaiter(plotOutput("lowDOdist", height = "300px", width = "100%"))
             )
         )
+    })
+    
+    # value box ----
+    output$station_count <- renderText({
+        tmp <- stn_trends_long |> 
+            filter(param == "domgl_median",
+                   direction != "not calculated") |> 
+            summarize(total = n(),
+                      decreasing = sum(significant == "yes" & direction == "decreasing"))
+        pct <- round(tmp$decreasing / tmp$total * 100)
+        paste0(pct, "%")
     })
     
     
