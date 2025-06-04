@@ -33,6 +33,8 @@ ui <- page_fillable(
     # Header ----
     layout_columns(
         col_widths = c(8, 4),
+        fill = FALSE,
+        
         # Header, github link, description
         div(
             # Header + GitHub link
