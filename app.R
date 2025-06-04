@@ -320,7 +320,7 @@ server <- function(input, output, session) {
         color = transparent(0.5)
     )
     
-    # map setup ----
+    # medians map setup----
     output$map_medians <- renderLeaflet({
         # base map
         m <- leaflet() |> 
@@ -360,7 +360,7 @@ server <- function(input, output, session) {
                 fillColor = ~palette_trnd(value),
                 fillOpacity = 0.7,
                 radius = ~size1,  # base it on the value
-                popup = ~paste(station, param, round(value, 1))
+                label = ~paste(station, param, round(value, 1))
             )  |>
             clearControls()
         
@@ -377,6 +377,7 @@ server <- function(input, output, session) {
         
     })
     
+    # trends map setup----
     output$map_trends <- renderLeaflet({
         # base map
         m <- leaflet() |> 
@@ -408,7 +409,8 @@ server <- function(input, output, session) {
                 weight = 1,
                 fillColor = ~palette_trnd(map_color),
                 fillOpacity = 0.7,
-                radius = 5
+                radius = 5,
+                label = ~paste(station, param, round(trend, 2))
             )  |> 
             addLegend(position = "bottomright",
                       colors = palette_trnd(c("increasing",
@@ -424,6 +426,7 @@ server <- function(input, output, session) {
         
     })
     
+    # time low map setup ----
     output$map_timeLow <- renderLeaflet({
         tomap_sub <- tomap |> 
             mutate(size1 = 6,                   # default to *not* sizing by time low
@@ -458,7 +461,7 @@ server <- function(input, output, session) {
                     iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
                     iconHeight = size1*2
                 ),
-                popup = ~paste(station, year, round(pct, 1))
+                label = ~paste(station, year, round(pct, 1))
             ) |> 
             addMarkers(
                 data = tomap_sub[rows_unusual, ],
@@ -470,7 +473,7 @@ server <- function(input, output, session) {
                     iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
                     iconHeight = size1*2
                 ),
-                popup = ~as.character(round(pct, 1)) 
+                label = ~paste(station, year, round(pct, 1)) 
             ) |> 
             clearControls() 
         
@@ -494,8 +497,7 @@ server <- function(input, output, session) {
     })
     
     
-    # medians  ----
-    # update median map based on selections
+    # medians map update ----
     observe({
         filtered2 <- tomap_medians |>
             filter(param == input$medianParam_sel) |>
@@ -531,7 +533,7 @@ server <- function(input, output, session) {
                     fillColor = ~palette_trnd(value),
                     fillOpacity = 0.7,
                     radius = ~size1,  # base it on the value
-                    popup = ~paste(station, param, round(value, 1))
+                    label = ~paste(station, param, round(value, 1))
                 )  |>
                 clearControls()
             
@@ -549,24 +551,11 @@ server <- function(input, output, session) {
                     fillColor = ~palette_trnd(value),
                     fillOpacity = ~ifelse(station == current_station_id, 0.9, 0.7),
                     radius = ~ifelse(station == current_station_id, 10, 6),
-                    popup = ~paste(station, param, round(value, 1))
+                    label = ~paste(station, param, round(value, 1))
                 )  |>
                 clearControls()
         }
         
-        
-        # deal with legends
-        
-        # if(input$median.size_sel == TRUE){
-        #     m <- m |>
-        #         addLegendCustom(
-        #             sizes = legend_sizes$size,
-        #             labels = legend_sizes$label,
-        #             colors = "black",
-        #             position = "bottomleft",   # Custom position
-        #             opacity = 0.5            # Custom opacity (0 to 1)
-        #         )
-        # }
         
         if(input$medianParam_sel != "domgl_median"){
             m <- m |>
@@ -590,8 +579,7 @@ server <- function(input, output, session) {
     })
     
     
-    # trends ----
-    # update trend map based on selections
+    # trends map update ----
     observe({
         filtered2 <- stn_trends_long |> 
             filter(param == input$trendParam_sel,
@@ -620,7 +608,8 @@ server <- function(input, output, session) {
                     weight = 1,
                     fillColor = ~palette_trnd(map_color),
                     fillOpacity = 0.7,
-                    radius = 6
+                    radius = 6,
+                    label = ~paste(station, param, round(trend, 2))
                 )  |> 
                 clearControls() |>
                 addLegend(position = "bottomright",
@@ -648,7 +637,8 @@ server <- function(input, output, session) {
                     opacity = ~ifelse(station == current_station_id, 1.0, 0.7),
                     fillColor = ~palette_trnd(map_color),
                     fillOpacity = ~ifelse(station == current_station_id, 0.9, 0.7),
-                    radius = ~ifelse(station == current_station_id, 10, 6)
+                    radius = ~ifelse(station == current_station_id, 10, 6),
+                    label = ~paste(station, param, round(trend, 2))
                 )  |> 
                 clearControls() |>
                 addLegend(position = "bottomright",
@@ -667,7 +657,7 @@ server <- function(input, output, session) {
         
     })
     
-    # timeLow ----
+    # timeLow map update----
     
     # make text output for card header
     output$selected_year <- renderText({
@@ -731,39 +721,44 @@ server <- function(input, output, session) {
                     color = "#E67E22",  # Orange outline
                     weight = 4,
                     opacity = 1.0,
-                    fillOpacity = 0  # Transparent fill
+                    fillOpacity = 0,  # Transparent fill
+                    label = ~paste(station, year, round(pct, 1))
                 )
             }
         }
         
-        # Add typical markers
-        m <- m |> addMarkers(
-            data = tomap_sub[rows_typical, ],
-            group = "in typical range",
-            lng = ~long,
-            lat = ~lat,
-            layerId = ~station,
-            icon = ~icons(
-                iconUrl = symbol,
-                iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-                iconHeight = size1*2
-            ),
-            popup = ~paste(station, year, round(pct, 1))
-        ) 
+        # Add typical markers only if there are any
+        if(length(rows_typical) > 0){
+            m <- m |> addMarkers(
+                data = tomap_sub[rows_typical, ],
+                group = "in typical range",
+                lng = ~long,
+                lat = ~lat,
+                layerId = ~station,
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                label = ~paste(station, year, round(pct, 1))
+            ) 
+        }
         
-        # Add unusual markers
-        m <- m |> addMarkers(
-            data = tomap_sub[rows_unusual, ],
-            lng = ~long,
-            lat = ~lat,
-            layerId = ~station,
-            icon = ~icons(
-                iconUrl = symbol,
-                iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
-                iconHeight = size1*2
-            ),
-            popup = ~paste(station, year, round(pct, 1)) 
-        )
+        # Add unusual markers only if there are any
+        if(length(rows_unusual) > 0) {
+            m <- m |> addMarkers(
+                data = tomap_sub[rows_unusual, ],
+                lng = ~long,
+                lat = ~lat,
+                layerId = ~station,
+                icon = ~icons(
+                    iconUrl = symbol,
+                    iconWidth = size1*2,   # because size1 is for radius, and icons use diameter
+                    iconHeight = size1*2
+                ),
+                label = ~paste(station, year, round(pct, 1)) 
+            )
+        }
         
         # deal with legends
         if(input$size_sel == TRUE){
