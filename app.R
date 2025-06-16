@@ -913,13 +913,30 @@ server <- function(input, output, session) {
         p3
     })
     
+    # reserve info ----
+    output$reserve_info <- renderText({
+        req(selected_station())
+        
+        res_inf <- stn_summaries |> 
+            filter(station == selected_station()) |> 
+            select(station, ReserveCode, ReserveName, ReserveState, ReserveWebsite, NERRAPage) |> 
+            distinct()
+        
+        res_out <- res_inf |> 
+            glue_data("<b>{station}</b> is a SWMP station at {ReserveName} ({ReserveCode}) NERR in {ReserveState}. 
+                      For more information about the reserve, please visit <a href='{NERRAPage}' target='_blank'>this website</a>.")
+        
+        HTML(res_out)
+    })
+    
+    
     # station table ----
     output$stn_tbl <- renderReactable({
         req(selected_station())
         
         tbl <- stn_summaries |> 
             filter(station == selected_station()) |> 
-            select(-station) |> 
+            select(1:5) |> 
             mutate(`Time Series Length (years)` = ifelse(row_number() == 1,
                                                          `Time Series Length (years)`, ""))
         
@@ -941,12 +958,18 @@ server <- function(input, output, session) {
             open = FALSE,
             
             h4(paste0("Selected Station: ", selected_station())),
-            span("Click to expand the section you're interested in.",
+            
+            htmlOutput("reserve_info"),
+            br(),
+            br(),
+            
+            span("Station details:",
                  tooltip(
                      bsicons::bs_icon("info-circle"),
                      HTML("<p>Pop graphs out to full screen from the bottom right corner.</p>
                     <p>Below the graphs is a slider bar to let you change how much of the x-axis is visible.</p>")
                  )),
+            br(),
             
             
             # numeric outputs
