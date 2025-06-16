@@ -919,12 +919,12 @@ server <- function(input, output, session) {
         
         res_inf <- stn_summaries |> 
             filter(station == selected_station()) |> 
-            select(station, ReserveCode, ReserveName, ReserveState, ReserveWebsite, NERRAPage) |> 
+            select(station, StationName, ReserveCode, ReserveName, ReserveState, ReserveWebsite, NERRAPage) |> 
             distinct()
         
         res_out <- res_inf |> 
-            glue_data("<b>{station}</b> is a SWMP station at {ReserveName} ({ReserveCode}) NERR in {ReserveState}. 
-                      For more information about the reserve, please visit <a href='{NERRAPage}' target='_blank'>this website</a>.")
+            glue_data("<b>{station}</b> is the {StationName} monitoring station at {ReserveName} ({ReserveCode}) NERR in {ReserveState}. 
+                      For more information about the reserve, please visit <a href='{ReserveWebsite}' target='_blank'>their website</a>.")
         
         HTML(res_out)
     })
