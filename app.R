@@ -114,11 +114,11 @@ ui <- page_fillable(
                         ),
                         radioButtons("trendParam_sel", label = NULL,
                                      choiceNames = c("Median DO Concentration",
-                                                     "Time DO < 2",
-                                                     "Time DO < 5"),
+                                                     "Time DO < 5",
+                                                     "Time DO < 2"),
                                      choiceValues = c("domgl_median",
-                                                      "LT2",
-                                                      "LT5"),
+                                                      "LT5",
+                                                      "LT2"),
                                      selected = "domgl_median")
                     ),
                     
@@ -152,7 +152,7 @@ ui <- page_fillable(
             card_header("What is 'normal' for each station?",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "The values shown on the map are the long-term median values of each annual value (for time <2 or 5 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."
+                            "The values shown on the map are the long-term median values of each annual value (for time < 5 or 2 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."
                         ), # end tooltip
             ), # end header
             
@@ -175,11 +175,11 @@ ui <- page_fillable(
                         ),
                         radioButtons("medianParam_sel", label = NULL,
                                      choiceNames = c("Median DO Concentration",
-                                                     "Time DO < 2",
-                                                     "Time DO < 5"),
+                                                     "Time DO < 5",
+                                                     "Time DO < 2"),
                                      choiceValues = c("domgl_median",
-                                                      "LT2",
-                                                      "LT5"),
+                                                      "LT5",
+                                                      "LT2"),
                                      selected = "domgl_median")
                     ),
                     
@@ -196,7 +196,7 @@ ui <- page_fillable(
         
         # panel 2: low do map ----
         nav_panel(
-            "Select-a-Year",
+            "Explore by Year",
             full_screen = TRUE,
             
             card_header(span("In the selected year (", 
@@ -208,7 +208,7 @@ ui <- page_fillable(
                         ) # end tooltip
             ), # end header
             
-            p("'Typical' and 'Unusual' were defined based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
+            p("'Typical' and 'Unusual' were defined for each station based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
             
             # sidebar layout, for map options
             layout_sidebar(
@@ -221,8 +221,8 @@ ui <- page_fillable(
                     
                     # choose threshold
                     radioButtons("threshold_sel", "Define 'low' DO as:",
-                                 choiceNames = c("<2 mg/L", "<5 mg/L"),
-                                 choiceValues = c("LT2", "LT5"),
+                                 choiceNames = c("< 5 mg/L", "< 2 mg/L"),
+                                 choiceValues = c("LT5", "LT2"),
                                  selected = "LT5"),
                     
                     # year selection
