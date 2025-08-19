@@ -490,7 +490,7 @@ server <- function(input, output, session) {
             addLegend(position = "bottomright",
                       colors = palette_time.hypoxic(c(0, 25, 50, 75, 100)),
                       labels = c(0, 25, 50, 75, 100),
-                      title = "Fill: % of year",
+                      title = "Color: % of year",
                       opacity = 0.7)
         
         m
