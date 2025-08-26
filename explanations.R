@@ -28,7 +28,7 @@ about_ui <- nav_panel(
         
         accordion_panel(
             title = "Trend Calculations",
-            p("only calculated when >10 yrs of data; GAMs and other details; again mention Reinl et al. synthesis"),
+            p("only calculated when >10 yrs of data; GAMs and other details; again mention Reinl et al."),
             
         ),
         
