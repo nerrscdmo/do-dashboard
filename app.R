@@ -18,6 +18,7 @@ library(glue)
 # setup ----
 source(here::here("R", "functions.R"))
 source("global.R")
+source("explanations.R")
 
 # UI ----
 ui <- page_fillable(
@@ -89,10 +90,25 @@ ui <- page_fillable(
             full_screen = TRUE,
             
             card_header("Where is DO changing over time?",
-                        tooltip(
-                            bsicons::bs_icon("info-circle"),
-                            "These trends were calculated as part of a SWMP Synthesis project. Stations were included only if they had at least 10 years of data and were active as of 2022."
-                        ), # end tooltip
+                        # tooltip(
+                        #     bsicons::bs_icon("info-circle"),
+                        #     "These trends were calculated as part of a SWMP Synthesis project. Stations were included only if they had at least 10 years of data and were active as of 2022."
+                        # ), # end tooltip
+                        # details popover
+                        popover(
+                            actionButton("btnTrendMap", "Map Details", 
+                                         icon = icon("map-location-dot"),
+                                         width = 175,
+                                         class = "small-btn"),
+                            
+                            p(strong("What do we want to see?"), "It depends on the selected trend to view. We don't want to see oxygen decreasing - if 'median DO concentration' was selected, we don't want to see much red, because red means median DO level is decreasing. If time below a threshold was selected, we don't want to see much purple, because purple represents MORE time where DO is low."),
+                            # p(strong("Clicking on a point"), "will open a sidebar with more details about the selected station: e.g., how long has data been recorded; what are the trend results; graphics of DO through time; and details on how DO in a single year compares to DO in other years at this station."),
+                            p(strong("Each point"), "represents a long-term trend value for a single station. A trend has been calculated for each station with enough data. Stations without enough data are labeled 'not calculated' and are represented by the color gray. Each station with a calculated trend was categorized based on whether the variable was increasing, decreasing, or not significantly changing through time. See the map legend for details on colors. Clicking on a point will open a sidebar with more information about that station."),
+                            br(),
+                            p("See the 'About' tab for more detail on data sources and calculations."),
+                            title = "Trends map details",
+                            placement = "right"
+                        ), # end popover
             ), # end header
             
             
@@ -150,10 +166,24 @@ ui <- page_fillable(
             full_screen = TRUE,
             
             card_header("What is 'normal' for each station?",
-                        tooltip(
-                            bsicons::bs_icon("info-circle"),
-                            "The values shown on the map are the long-term median values of each annual value (for time < 5 or 2 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."
-                        ), # end tooltip
+                        # tooltip(
+                        #     bsicons::bs_icon("info-circle"),
+                        #     "The values shown on the map are the long-term median values of each annual value (for time < 5 or 2 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."
+                        # ), # end tooltip
+                        popover(
+                            actionButton("btnMediansMap", "Map Details", 
+                                         icon = icon("map-location-dot"),
+                                         width = 175,
+                                         class = "small-btn"),
+                            p("The values shown on the map are the long-term median values of each annual value (for time < 5 or 2 mg/L, this is '% of the year'; for DO mg/L, it is median annual mg/L."),
+                            p(strong("What do we want to see?"), "It depends on the selected variable. Ideally, we see more higher levels of median DO than lower values - more blues than greens and yellows. For time below thresholds, we want lower values; more yellow and orange than red."),
+                            # p(strong("Clicking on a point"), "will open a sidebar with more details about the selected station: e.g., how long has data been recorded; what are long-term median values; what are the trend results; graphics of DO through time; and details on how DO in a single year compares to DO in other years at this station."),
+                            p(strong("Each point"), "represents a long-term summary value for a single station. Clicking on a point will open a sidebar with more information about that station."),
+                            br(),
+                            p("See the 'About' tab for more detail on data sources and calculations."),
+                            title = "Medians map details",
+                            placement = "right"
+                        ), # end popover
             ), # end header
             
             
@@ -202,10 +232,28 @@ ui <- page_fillable(
             card_header(span("In the selected year (", 
                              textOutput("selected_year", inline = TRUE),
                              "), how much of the time was DO below the selected threshold?"),
-                        tooltip(
-                            bsicons::bs_icon("info-circle"),
-                            "Info here about % of readings, and how typical/unusual was determined"
-                        ) # end tooltip
+                        # tooltip(
+                        #     bsicons::bs_icon("info-circle"),
+                        #     "Info here about % of readings, and how typical/unusual was determined"
+                        # ) # end tooltip
+                        popover(
+                            actionButton("btnYearlyMap", "Map Details", 
+                                         icon = icon("map-location-dot"),
+                                         width = 175,
+                                         class = "small-btn"),
+                            p("A single year and various other options can be selected in the left sidebar. The values shown on the map are the percent of readings that year where the DO measurement fell below the selected threshold."),
+                            p(strong("What do we want to see?"), "Lighter, more yellow colors are better. Low DO can be a normal event, but we still don't want it occurring much of the year."),
+                            # p(strong("Clicking on a point"), "will open a sidebar with more details about the selected station: e.g., how long has data been recorded; what are long-term median values; what are the trend results; graphics of DO through time; and details on how DO in a single year compares to DO in other years at this station."),
+                            br(),
+                            p(strong("Each point"), "represents a single year summary of low DO at a single station. Clicking on a point will open a sidebar with more information about that station."),
+                            p(strong("Point color"), "represents the percent of the year with low DO. In the left sidebar, you can change this to represent whether the amount of low DO was typical for a station, or unusually high."),
+                            p(strong("Point shape"), "represents whether this amount of low DO is typical for a station, or if it was an unusually high value compared to other values at the station."),
+                            
+                            br(),
+                            p("See the 'About' tab for more detail on data sources and calculations."),
+                            title = "Yearly map details",
+                            placement = "right")
+                        ), # end popover
             ), # end header
             
             p("'Typical' and 'Unusual' were defined for each station based on data since 2002. For some stations, human impacts that cause low DO have existed longer than this dataset. So, just because a year here is 'typical' for a station, that doesn't necessarily mean it is good."),
@@ -289,23 +337,7 @@ ui <- page_fillable(
         ), # end nav-panel 2
         
         # panel 4: Instructions ----
-        nav_panel(
-            "Using this dashboard",
-            full_screen = FALSE,
-            
-            card_header("Tips and Tricks",
-                        tooltip(
-                            bsicons::bs_icon("info-circle"),
-                            "Info here about % of readings, and how typical/unusual was determined"
-                        ) # end tooltip
-            ), # end header
-            
-            p("Put text here about different options"),
-            p("...what each tab does, how to interact with the maps, what pops up in the sidebar and how you can interact with that"),
-            p("...about SWMP data"),
-            p("...text about dashboard development and for more information, etc.")
-            
-        ) # end nav-panel 4
+        about_ui
         
     ) # end nav-panel layout
     
