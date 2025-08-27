@@ -28,7 +28,19 @@ about_ui <- nav_panel(
         
         accordion_panel(
             title = "Trend Calculations",
-            p("only calculated when >10 yrs of data; GAMs and other details; again mention Reinl et al."),
+            p("again mention Reinl et al.;"),
+            br(),
+            
+            h5("When trends were calculated"),
+            p("trends only calculated when >10 yrs of data (if <10, declared 'not calculated' and represented by the color gray)."),
+            p("For stations where trend was calculated: if p-value was <0.05, significant trend was recognized, as either increasing or decreasing. Otherwise, it was declared 'no trend' at that station."),
+            br(),
+            
+            h5("How trends were calculated"),
+            p("We used GAMs (generalized additive models) to calculate trends. A seasonal term is included, with 12 knots if possible and the number of months represented in the data frame otherwise (e.g. stations where sondes are removed part of the year due to ice). Using a custom function, autocorrelation of residuals was automatically checked for and if present, the model was re-run to account for the autocorrelation. The reported trend in the outputs is the LINEAR trend through time (per year) of the parameter, after accounting for autocorrelation and seasonality through the GAM."),
+            p("For WQ proportion of DO below 2 and 5: These calculations were made before monthly aggregation - each valid 15-minute data point was marked TRUE/FALSE for below 2 and 5, respectively (in separate columns). During monthly aggregation, the total TRUE for each month was divided by the total number of valid DO points for the month, leading to a proportion per month. Trends were again calculated in `mgcv::bam()` with a seasonal term and an autocorrelation term if necessary. Because this response is a proportion, we used `family = betar()`. The `eps` option, which adjusts exact 0s and 1s, was set to 1/10th of the minimum number of readings per month (1/27900)."),
+            p("All trends were calculated using the `bam` function from the R `mgcv` package.")
+            
             
         ),
         

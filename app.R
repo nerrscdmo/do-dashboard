@@ -252,7 +252,7 @@ ui <- page_fillable(
                             br(),
                             p("See the 'About' tab for more detail on data sources and calculations."),
                             title = "Yearly map details",
-                            placement = "right")
+                            placement = "right"
                         ), # end popover
             ), # end header
             
