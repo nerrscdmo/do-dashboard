@@ -9,5 +9,13 @@ This dashboard imported trends that had already been calculated as part of a SWM
 
 Processing scripts are in the [DO Data Processing Repository](https://github.com/nerrscdmo/do-data-processing). Follow instructions in that readme to update processed data. `do_dataframes.RData` needs to be copied from the processing repo into the `data_wq` folder of this `do-dashboard` project.  
 
-In this `do-dashboard` directory, make sure `NERR Websites.csv` is up-to-date.
+In this `do-dashboard` directory, make sure `NERR Websites.csv` is up-to-date.  
 
+
+### Colors and symbols  
+
+In this dashboard, the color palettes for maps are defined at the top of `global.R`. Shapes and sizes are defined just below color palettes. Custom symbols (non-circles, with the selected color palette) are generated in this `global.R` as well, using functions that refer back to the color palette and shape designations earlier in the script.   
+
+### Factor order  
+
+The levels of trend results (increasing/decreasing/no trend/not calculated) are ordered in the definitions of the color palettes in `global.R`.  
