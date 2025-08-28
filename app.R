@@ -970,7 +970,8 @@ server <- function(input, output, session) {
             filter(station == selected_station()) |> 
             select(1:5) |> 
             mutate(`Time Series Length (years)` = ifelse(row_number() == 1,
-                                                         `Time Series Length (years)`, ""))
+                                                         `Time Series Length (years)`, "")) |> 
+            select(-station)
         
         reactable(tbl,
                   sortable = FALSE,
