@@ -16,7 +16,7 @@ library(waiter)
 library(glue)
 
 # setup ----
-source(here::here("R", "functions.R"))
+source("functions.R")
 source("global.R")
 source("explanations.R")
 
@@ -170,7 +170,6 @@ ui <- page_fillable(
                             p("The values shown on the map are the long-term median values, after already summarizing each variable to a single value per year. For time < 5 or 2 mg/L, each yearly value is '% of the year below the threshold' (a total); for DO mg/L, it is median annual concentration (mg/L)."),
                             br(),
                             p(strong("What do we want to see?"), "It depends on the selected variable. Ideally, we see more higher levels of median DO than lower values - more blues than greens and yellows. For time below thresholds, we want lower values; more yellow and orange than red."),
-                            # p(strong("Clicking on a point"), "will open a sidebar with more details about the selected station: e.g., how long has data been recorded; what are long-term median values; what are the trend results; graphics of DO through time; and details on how DO in a single year compares to DO in other years at this station."),
                             br(),
                             p(strong("Each point"), "represents a long-term summary value for a single station. Clicking on a point will open a sidebar with more information about that station."),
                             br(),
@@ -362,9 +361,6 @@ server <- function(input, output, session) {
         filtered2 <- tomap_medians |>
             filter(param == "domgl_median") |>
             mutate(
-                # if user wants to size points by pct, use size 1. if they don't, make it 4.
-                # size1 = case_when(input$median.size_sel == FALSE ~ 6,
-                #                   .default = value)
                 size1 = 6
             ) 
         
@@ -525,9 +521,6 @@ server <- function(input, output, session) {
         filtered2 <- tomap_medians |>
             filter(param == input$medianParam_sel) |>
             mutate(
-                # if user wants to size points by pct, use size 1. if they don't, make it 4.
-                # size1 = case_when(input$median.size_sel == FALSE ~ 6,
-                #                   .default = value)
                 size1 = 6
             ) 
         
@@ -1038,7 +1031,7 @@ server <- function(input, output, session) {
             
             accordion_panel(
                 title = paste("Selected Year:", input$year),
-                tags$small("Choose a year from the 'Select-a-Year' tab."),
+                p("A different year can be chosen in the 'Explore by Year' tab."),
                 
                 withWaiter(plotOutput("lowDOdist", height = "300px", width = "100%"))
             )
