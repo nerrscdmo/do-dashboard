@@ -234,7 +234,8 @@ ui <- page_fillable(
                             p("A single year and various other options can be selected in the left sidebar. The values shown on the map are the percent of readings that year where the DO measurement fell below the selected threshold."),
                             br(),
                             p(strong("What do we want to see?"), "Lighter, more yellow colors are better. Low DO can be a normal event, but we still don't want it occurring much of the year."),
-                            br(),
+                           
+                             br(),
                             p(strong("Each point"), "represents a single year summary of low DO at a single station. Clicking on a point will open a sidebar with more information about that station."),
                             p(strong("Point color"), "represents the percent of the year with low DO. In the left sidebar, you can change this to represent whether the amount of low DO was typical for a station, or unusually high."),
                             p(strong("Point shape"), "represents whether this amount of low DO is typical for a station, or if it was an unusually high value compared to other values at the station."),

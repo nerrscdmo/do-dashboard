@@ -30,8 +30,20 @@ about_ui <- nav_panel(
         
         accordion_panel(
             title = "Data source(s) and Definitions",
+            
+            h5("Data source"),
+            p("Data files from all water quality stations were downloaded from the NERRS Centralized Data Management Office", 
+              tags$a("Advanced Query System, Zip Download", href = "https://cdmo.baruch.sc.edu/aqs/zips.cfm", target = "_blank"),
+              "and processed using code in this", tags$a("do-data-processing repository", href = "https://github.com/nerrscdmo/do-data-processing", target = "_blank"), "."),
+            p("The time period included in this dashboard is 2002 - 2023."),
+            br(),
+            
+            h5("Variable definitions"),
             p("here, discuss median DO and the thresholds, and trends in the Reinl et al. synthesis"),
-            p("definitely link to CDMO SWMP data here")
+            br(),
+            
+            h5("Category definitions"),
+            p("increasing/decreasing/no trend; typical/unusual (boxplot outlier definition - per station)")
             
         ),
         
