@@ -83,3 +83,9 @@ div.shiny-options-group label,  /* Radio and checkbox group options */
     height: 14px !important;
     border-radius: 50%;
 }
+
+/* Popover width */
+.popover {
+    max-width: 400px; /* Default is usually 276px */
+    width: 400px;
+}
