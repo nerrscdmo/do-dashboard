@@ -35,12 +35,23 @@ h5 {
 p {
     font-size: 14px !important;
     margin-top: 4px !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 16px !important;
+}
+
+/* Remove extra bottom margin when paragraph is followed by a list */
+p + ul,
+p + ol {
+    margin-top: -8px !important;  /* Adjust this value to get the spacing you want */
 }
 
 .accordion-button {
     font-size: 14px !important;
     color: blue;
+}
+
+/* List items in accordions - match accordion text size */
+.accordion li {
+    font-size: 14px !important;
 }
 
 /* Option text - 12px */

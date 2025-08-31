@@ -96,11 +96,8 @@ ui <- page_fillable(
                                          width = 175,
                                          class = "small-btn"),
                             p("The values shown on the map are long-term trend results for various aspects of Dissolved Oxygen."),
-                            br(),
                             p(strong("What do we want to see?"), "It depends on the selected trend to view. We don't want to see oxygen decreasing - if 'median DO concentration' was selected, we don't want to see much red, because red means median DO level is decreasing. If time below a threshold was selected, we don't want to see much purple, because purple represents MORE time where DO is low."),
-                            br(),
                             p(strong("Each point"), "represents a long-term trend value for a single station. A trend has been calculated for each station with enough data. Stations without enough data are labeled 'not calculated' and are represented by the color gray. Each station with a calculated trend was categorized based on whether the variable was increasing, decreasing, or not significantly changing through time. See the map legend for details on colors. Clicking on a point will open a sidebar with more information about that station."),
-                            br(),
                             p("See the 'About' tab for more detail on data sources and calculations."),
                             title = "Trends map details",
                             placement = "right"
@@ -168,11 +165,8 @@ ui <- page_fillable(
                                          width = 175,
                                          class = "small-btn"),
                             p("The values shown on the map are the long-term median values, after already summarizing each variable to a single value per year. For time < 5 or 2 mg/L, each yearly value is '% of the year below the threshold' (a total); for DO mg/L, it is median annual concentration (mg/L)."),
-                            br(),
                             p(strong("What do we want to see?"), "It depends on the selected variable. Ideally, we see more higher levels of median DO than lower values - more blues than greens and yellows. For time below thresholds, we want lower values; more yellow and orange than red."),
-                            br(),
                             p(strong("Each point"), "represents a long-term summary value for a single station. Clicking on a point will open a sidebar with more information about that station."),
-                            br(),
                             p("See the 'About' tab for more detail on data sources and calculations."),
                             title = "Medians map details",
                             placement = "right"
@@ -231,15 +225,10 @@ ui <- page_fillable(
                                          width = 175,
                                          class = "small-btn"),
                             p("A single year and various other options can be selected in the left sidebar. The values shown on the map are the percent of readings that year where the DO measurement fell below the selected threshold."),
-                            br(),
                             p(strong("What do we want to see?"), "Lighter, more yellow colors are better. Low DO can be a normal event, but we still don't want it occurring much of the year."),
-                           
-                             br(),
                             p(strong("Each point"), "represents a single year summary of low DO at a single station. Clicking on a point will open a sidebar with more information about that station."),
                             p(strong("Point color"), "represents the percent of the year with low DO. In the left sidebar, you can change this to represent whether the amount of low DO was typical for a station, or unusually high."),
                             p(strong("Point shape"), "represents whether this amount of low DO is typical for a station, or if it was an unusually high value compared to other values at the station."),
-                            
-                            br(),
                             p("See the 'About' tab for more detail on data sources and calculations."),
                             title = "Yearly map details",
                             placement = "right"
