@@ -35,15 +35,26 @@ about_ui <- nav_panel(
             p("Data files from all water quality stations were downloaded from the NERRS Centralized Data Management Office", 
               tags$a("Advanced Query System, Zip Download", href = "https://cdmo.baruch.sc.edu/aqs/zips.cfm", target = "_blank"),
               "and processed using code in this", tags$a("do-data-processing repository", href = "https://github.com/nerrscdmo/do-data-processing", target = "_blank"), ".
-              Monthly values were calculated when at least a week's worth of readings were present and passed QA/QC criteria: median DO concentration (mg/L) as the median of all monthly readings in the month, and % of readings below the thresholds of 5 and 2 mg/L. 
-              Annual values were also calculated: annual median DO was the median of the monthly medians within the year; and % time below 5 and 2 mg/L was the % of readings for the entire year (not based on monthly values) below the thresholds."),
+              Monthly values were calculated when at least a week's worth of readings were present and passed QA/QC criteria: median DO concentration (mg/L) as the median of all valid readings within the month, and % of valid readings below the thresholds of 5 and 2 mg/L."),
             p("The time period included in this dashboard is 2002 - 2023."),
 
             h5("Variable definitions"),
-            p("here, discuss median DO and the thresholds, and trends in the Reinl et al. synthesis"),
-
-            h5("Category definitions"),
-            p("increasing/decreasing/no trend; typical/unusual (boxplot outlier definition - per station)")
+            p(strong("DO concentration:"), "All calculations involving DO concentration (mg/L) were based on monthly median DO mg/L values."),
+            tags$ul(
+                tags$li("Trend in median DO concentration (as in the 'Trends' tab) is the long-term change in DO mg/L, calculated as described below, based on monthly median DO mg/L."),
+                tags$li("Annual median DO concentration is the median of all monthly medians within a given year."),
+                tags$li("Long-term median DO concentration (as in the 'Long-Term Medians' tab) is the median of all annual medians at a station.")
+            ),
+            p(strong("Time < 5 or 2 mg/L:"), " All calculations involving time below given thresholds involved a proportion or percent of valid readings that were below these numbers."),
+            tags$ul(
+                tags$li("Trend in time below thresholds (as in the 'Trends' tab) is the long-term change in proportion of time below the thresholds, calculated as described below, based on monthly proportions of time below thresholds."),
+                tags$li("Annual time below thresholds (as in the 'Explore by Year' tab) represents the total percent of valid readings within a year that were below the thresholds."),
+                tags$li("Long-term median time below thresholds (as in the 'Long-Term Medians' tab) is the median of the annual percents at a station.")
+            ),
+            p(strong("Typical vs. Unusual Low DO"), "Low DO is not necessarily rare or bad. It can be bad, but for some stations, it is a natural occurrence, particularly in summer.
+              As such, in addition to showing only the amount of time that DO was below thresholds in any given year, this dashboard shows whether that amount is 'typical' for a station or
+              unusually high. An annual time below either threshold was determined to be", strong("unusual"), "if it would appear as an outlier point on a boxplot
+              of all annual values for that threshold. The calculation was [3rd quantile + 1.5*IQR].")
             
         ),
         

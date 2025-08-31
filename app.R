@@ -119,7 +119,7 @@ ui <- page_fillable(
                         "Select trend to view: ",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
+                            "Decreases in DO concentration are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
                         ),
                         radioButtons("trendParam_sel", label = NULL,
                                      choiceNames = c("Median DO Concentration",
@@ -188,7 +188,7 @@ ui <- page_fillable(
                         "Select DO metric to view: ",
                         tooltip(
                             bsicons::bs_icon("info-circle"),
-                            "Decreases in DO are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
+                            "Decreases in DO concentration are more common than changes in time spent below thresholds. Here you can choose which metric you would like to examine."
                         ),
                         radioButtons("medianParam_sel", label = NULL,
                                      choiceNames = c("Median DO Concentration",
