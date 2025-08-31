@@ -1,0 +1,13 @@
+name: do-dashboard
+title: do-dashboard
+username: catbirdstats
+account: catbirdstats
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14063553
+bundleId: 10840507
+url: https://catbirdstats.shinyapps.io/do-dashboard/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: 2025-06-24 Denise feedback.pdf|LICENSE|README.md

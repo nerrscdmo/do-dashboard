@@ -1,0 +1,13 @@
+name: do-dashboard_withSpinners
+title: do-dashboard_withSpinners
+username: catbirdstats
+account: catbirdstats
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14872520
+bundleId: 10396424
+url: https://catbirdstats.shinyapps.io/do-dashboard_withSpinners/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rprofile|addl R/app01-original.R|addl R/app02-with-accordion.R|addl R/app03-side-by-side-maps.R|addl R/distn_plots.R|data_wq_old/do_dataframes_2002-2023.RData|data_wq_old/do_dataframes_outdated.RData|data_wq_old/do_dataframes_outdated2.RData|data_wq_old/do_dataframes_outdated3.RData|data_wq_old/do_dataframes_outdated4.RData|example.png|LICENSE|README.md|Rprof.out|testplot.png

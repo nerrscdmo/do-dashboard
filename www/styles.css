@@ -44,6 +44,11 @@ p + ol {
     margin-top: -8px !important;  /* Adjust this value to get the spacing you want */
 }
 
+/* Smaller spacing for paragraphs in footer area */
+.footer-text p {
+    margin-bottom: 12px !important;
+}
+
 .accordion-button {
     font-size: 14px !important;
     color: blue;
